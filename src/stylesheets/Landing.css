@@ -1,0 +1,12 @@
+.landing-container {
+  text-align: center;
+  padding: 100px 20px;
+  background: #f4f6f8;
+}
+
+.botones {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}

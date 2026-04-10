@@ -1,0 +1,10 @@
+.card {
+  border-radius: 10px;
+}
+
+.avatar {
+  width: 50px;
+  height: 50px;
+  background: #ccc;
+  border-radius: 50%;
+}

@@ -1,0 +1,7 @@
+.navbar-custom {
+  background-color: #002a8d;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+}
