@@ -166,7 +166,7 @@ function Auth() {
                     <div className="links">
                         <span onClick={() => setModo("login")}>Login</span>
                         <span onClick={() => setModo("registro")}>Registro</span>
-                        <span onClick={() => setModo("lider")}>Soy líder</span>
+                        <span onClick={() => navigate("/auth-lider")}>Soy líder</span>
                     </div>
                 </div>
             </div>

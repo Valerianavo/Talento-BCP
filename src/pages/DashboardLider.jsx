@@ -128,14 +128,7 @@ function DashboardLider() {
             </h3>
             <p className="text-muted mb-0">Panel exclusivo para líderes BCP</p>
           </div>
-          <div className="d-flex gap-2">
-            <button className="btn btn-outline-primary btn-sm" onClick={() => navigate("/catalogo")}>
-              Ver catálogo
-            </button>
-            <button className="btn btn-outline-danger btn-sm" onClick={async () => { await signOut(auth); navigate("/"); }}>
-              Cerrar sesión
-            </button>
-          </div>
+          
         </div>
 
         {/* ══ TABS ══ */}
@@ -267,11 +260,32 @@ function DashboardLider() {
                         </button>
                         <button
                           className="btn btn-outline-warning btn-sm"
-                          onClick={() => quitarFavorito(p.id)}
+                          onClick={() => {
+                            Swal.fire({
+                              title: '¿Estás seguro?',
+                              text: "Se quitará de tus favoritos",
+                              icon: 'warning',
+                              showCancelButton: true,
+                              confirmButtonColor: '#ffc107', // Color amarillo del btn-outline-warning
+                              cancelButtonColor: '#6c757d',
+                              confirmButtonText: 'Sí, quitar',
+                              cancelButtonText: 'Cancelar'
+                            }).then((result) => {
+                              if (result.isConfirmed) {
+                                quitarFavorito(p.id);
+                                Swal.fire(
+                                  '¡Quitado!',
+                                  'El elemento ha sido eliminado de favoritos.',
+                                  'success'
+                                );
+                              }
+                            });
+                          }}
                           title="Quitar de favoritos"
                         >
                           ✕
                         </button>
+
                       </div>
                     </div>
                   </div>

@@ -10,17 +10,6 @@ function Landing() {
       <div className="landing-container">
         <h1>Bienvenido a Talento BCP</h1>
         <p>Descubre talento o impulsa tu carrera dentro del banco</p>
-
-        <div className="botones">
-            <Link to="/auth">
-                Soy practicante
-            </Link>
-            
-            <Link to="/catalogo" className="btn btn-warning">
-                Soy líder
-            </Link>
-
-        </div>
       </div>
     </div>
   );
