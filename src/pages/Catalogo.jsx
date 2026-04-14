@@ -55,15 +55,20 @@ const rangoExp = (meses) => {
   return "+12 meses";
 };
 
+/* ─────────────────────────────────────────
+   FILTROS_INIT — debe coincidir exactamente
+   con lo que espera Filtros.jsx
+───────────────────────────────────────── */
 const FILTROS_INIT = {
-  busqueda:         "",
-  areas:            [],
-  skills:           [],
-  idiomas:          [],
-  nivelEducacion:   [],
-  rangoExperiencia: [],
-  soloFavoritos:    false,
-  soloConProyectos: false,
+  busqueda:          "",
+  areasActuales:     [],   // filtra por p.area (área actual)
+  areasAnteriores:   [],   // filtra por p.areasRotacion[].area (historial BCP)
+  skills:            [],
+  idiomas:           [],
+  nivelEducacion:    [],
+  soloFavoritos:     false,
+  soloConProyectos:  false,
+  soloConRotaciones: false, // solo practicantes con rotaciones registradas
 };
 
 /* ══════════════════════════════════════════
@@ -127,31 +132,40 @@ function Catalogo() {
     return [...set].sort();
   }, [perfiles]);
 
-  /* ── Filtrado ── */
+  /* ── Filtrado — usa areasActuales / areasAnteriores ── */
   const filtrados = useMemo(() => {
     const txt = filtros.busqueda.toLowerCase().trim();
+
     return perfiles
       .filter((p) => {
         if (p.completitud < 40) return false;
 
+        /* texto libre */
         if (txt) {
           const hay = [
             p.nombre, p.titulo, p.area, p.intereses, p.distrito, p.ciudad, p.pais,
             ...(p.skills || []),
             ...(p.habilidadesBlandas || []),
-            ...(Array.isArray(p.areas) ? p.areas : []),
+            ...(p.areasRotacion || []).map((r) => r.area + " " + (r.logros || "")),
           ].filter(Boolean).join(" ").toLowerCase();
           if (!hay.includes(txt)) return false;
         }
 
-        if (filtros.areas.length > 0) {
-          const areasP = [
-            ...(Array.isArray(p.areas) ? p.areas : []),
-            ...(p.area ? [p.area] : []),
-          ];
-          if (!filtros.areas.some((a) => areasP.includes(a))) return false;
+        /* área ACTUAL (filtra por p.area exacto) */
+        if (filtros.areasActuales.length > 0) {
+          if (!filtros.areasActuales.includes(p.area)) return false;
         }
 
+        /* área ANTERIOR / ROTACIÓN (filtra por p.areasRotacion[].area) */
+        if (filtros.areasAnteriores.length > 0) {
+          const areasRot = (p.areasRotacion || []).map((r) => r.area);
+          if (!filtros.areasAnteriores.some((a) => areasRot.includes(a))) return false;
+        }
+
+        /* solo practicantes con historial de rotación */
+        if (filtros.soloConRotaciones && !(p.areasRotacion?.length > 0)) return false;
+
+        /* skills */
         if (filtros.skills.length > 0) {
           const sp = [
             ...(p.skills || []).map((s) => s.trim()),
@@ -160,23 +174,22 @@ function Catalogo() {
           if (!filtros.skills.some((s) => sp.includes(s))) return false;
         }
 
+        /* idiomas */
         if (filtros.idiomas.length > 0) {
           const ip = (p.idiomas || []).map((i) => i.idioma || i);
           if (!filtros.idiomas.some((i) => ip.includes(i))) return false;
         }
 
+        /* nivel educación */
         if (filtros.nivelEducacion.length > 0) {
           const np = (p.educacion || []).map((e) => e.nivel);
           if (!filtros.nivelEducacion.some((n) => np.includes(n))) return false;
         }
 
-        if ((filtros.rangoExperiencia || []).length > 0) {
-          const meses = calcMesesExp(p.experiencia);
-          const rango = rangoExp(meses);
-          if (!rango || !filtros.rangoExperiencia.includes(rango)) return false;
-        }
-
+        /* favoritos */
         if (filtros.soloFavoritos    && !favIds.includes(p.id))     return false;
+
+        /* proyectos */
         if (filtros.soloConProyectos && !(p.proyectos?.length > 0)) return false;
 
         return true;
@@ -210,11 +223,16 @@ function Catalogo() {
     }
   };
 
+  /* ── Contador de filtros activos — usa los nuevos nombres ── */
   const cantFiltros =
-    filtros.areas.length + filtros.skills.length +
-    filtros.idiomas.length + filtros.nivelEducacion.length +
-    (filtros.rangoExperiencia || []).length +
-    (filtros.soloFavoritos ? 1 : 0) + (filtros.soloConProyectos ? 1 : 0);
+    (filtros.areasActuales?.length   || 0) +
+    (filtros.areasAnteriores?.length || 0) +
+    (filtros.skills?.length          || 0) +
+    (filtros.idiomas?.length         || 0) +
+    (filtros.nivelEducacion?.length  || 0) +
+    (filtros.soloFavoritos    ? 1 : 0) +
+    (filtros.soloConProyectos ? 1 : 0) +
+    (filtros.soloConRotaciones? 1 : 0);
 
   if (loading) return (
     <div className="pantalla-carga">
@@ -249,7 +267,7 @@ function Catalogo() {
           )}
         </div>
 
-        {/* Botón filtrar — solo en mobile; en desktop el panel está siempre visible */}
+        {/* Botón filtrar — visible en mobile; en desktop el panel está siempre visible */}
         <button
           className={`cat-btn-filtrar cat-btn-filtrar-mobile ${cantFiltros > 0 ? "cat-btn-filtrar-on" : ""}`}
           onClick={() => setPanelAbierto((v) => !v)}
@@ -262,18 +280,15 @@ function Catalogo() {
       {/* CUERPO: FILTROS IZQUIERDA | CARDS DERECHA */}
       <div className="cat-body">
 
-        {/* FILTROS a la izquierda */}
         <Filtros
           filtros={filtros}
           onChange={setFiltros}
           skillsDisponibles={skillsDisponibles}
-          favoritosIds={favIds}
           esLider={esLider}
           abierto={panelAbierto}
           onCerrar={() => setPanelAbierto(false)}
         />
 
-        {/* GRID a la derecha */}
         <div className="cat-grid-area">
           <div className="cat-section-header">
             <h2 className="cat-section-titulo">Encuentra tu talento</h2>
@@ -333,9 +348,10 @@ function Catalogo() {
    TARJETA
 ══════════════════════════════════════════ */
 function TarjetaPracticante({ perfil, esFav, esLider, onToggleFav, onClick }) {
-  const areasP = [
-    ...(Array.isArray(perfil.areas) ? perfil.areas : []),
-    ...(perfil.area && !perfil.areas?.includes?.(perfil.area) ? [perfil.area] : []),
+  /* área actual + áreas de rotación para mostrar chips */
+  const todasAreas = [
+    ...(perfil.area ? [perfil.area] : []),
+    ...(perfil.areasRotacion || []).map((r) => r.area).filter((a) => a !== perfil.area),
   ].filter(Boolean);
 
   const ubicacion = [perfil.ciudad, perfil.pais].filter(Boolean).join(", ") || perfil.distrito || null;
@@ -378,10 +394,24 @@ function TarjetaPracticante({ perfil, esFav, esLider, onToggleFav, onClick }) {
         </div>
       </div>
 
-      {areasP.length > 0 && (
+      {/* Área actual */}
+      {todasAreas.length > 0 && (
         <div className="tc-areas">
-          {areasP.slice(0, 2).map((a, i) => <span key={i} className="tc-area-chip">{a}</span>)}
-          {areasP.length > 2 && <span className="tc-area-mas">+{areasP.length - 2}</span>}
+          {/* área actual: chip azul */}
+          {perfil.area && (
+            <span className="tc-area-chip tc-area-actual">{perfil.area}</span>
+          )}
+          {/* áreas anteriores: chip más sutil, máx 1 */}
+          {(perfil.areasRotacion || []).slice(0, 1).map((r, i) => (
+            r.area !== perfil.area && (
+              <span key={i} className="tc-area-chip tc-area-anterior" title="Área anterior en BCP">
+                {r.area}
+              </span>
+            )
+          ))}
+          {todasAreas.length > 2 && (
+            <span className="tc-area-mas">+{todasAreas.length - 2}</span>
+          )}
         </div>
       )}
 
@@ -398,7 +428,7 @@ function TarjetaPracticante({ perfil, esFav, esLider, onToggleFav, onClick }) {
         </div>
       )}
 
-      {/* Skills BLANDAS — separadas y más sutiles */}
+      {/* Skills BLANDAS */}
       {blandas.length > 0 && (
         <div className="tc-tags-row" style={{ marginTop: 3 }}>
           <span className="tc-tags-label tc-tags-label-bla">Blandas:</span>
@@ -427,20 +457,15 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
     return () => { document.body.style.overflow = ""; };
   }, []);
 
-  const areasP = [
-    ...(Array.isArray(perfil.areas) ? perfil.areas : []),
-    ...(perfil.area ? [perfil.area] : []),
-  ].filter((v, i, a) => a.indexOf(v) === i);
-
-  const meses    = calcMesesExp(perfil.experiencia);
-  const rango    = rangoExp(meses);
   const ubicacion = [perfil.ciudad, perfil.pais].filter(Boolean).join(", ") || perfil.distrito || null;
+  const meses     = calcMesesExp(perfil.experiencia);
+  const rango     = rangoExp(meses);
 
   return (
     <div className="mp-overlay" onClick={onCerrar}>
       <div className="mp-caja" onClick={(e) => e.stopPropagation()}>
 
-        {/* BARRA SUPERIOR: ← Volver + ✕ */}
+        {/* Barra superior */}
         <div className="mp-topbar">
           <button className="mp-volver-btn" onClick={onCerrar}>← Volver al catálogo</button>
           <button className="mp-cerrar" onClick={onCerrar}>✕</button>
@@ -472,9 +497,20 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
                 </div>
                 <p className="mp-titulo">{perfil.titulo || "Sin título"}</p>
                 {ubicacion && <p className="mp-ubic">📍 {ubicacion}</p>}
-                {rango && <p className="mp-rango-exp">💼 {rango} de experiencia total</p>}
+                {rango     && <p className="mp-rango-exp">💼 {rango} de experiencia total</p>}
+
+                {/* Área actual + rotaciones */}
                 <div className="mp-areas">
-                  {areasP.map((a, i) => <span key={i} className="tc-area-chip">{a}</span>)}
+                  {perfil.area && (
+                    <span className="tc-area-chip tc-area-actual">{perfil.area}</span>
+                  )}
+                  {(perfil.areasRotacion || []).map((r, i) => (
+                    r.area !== perfil.area && (
+                      <span key={i} className="tc-area-chip tc-area-anterior" title={`${r.desdeM} ${r.desdeA} – ${r.actualmente ? "Actualidad" : `${r.hastaM} ${r.hastaA}`}`}>
+                        {r.area}
+                      </span>
+                    )
+                  ))}
                 </div>
               </div>
             </div>
@@ -487,10 +523,25 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
                   {ubicacion        && <MpDato icon="📍" val={ubicacion} />}
                   {perfil.telefono  && <MpDato icon="📱" val={perfil.telefono} />}
                   {perfil.email     && <MpDato icon="📧" val={perfil.email} />}
+                  {perfil.dni       && <MpDato icon="🪪" val={`DNI: ${perfil.dni}`} />}
                   {perfil.fechaNacimiento && <MpDato icon="🎂" val={perfil.fechaNacimiento} />}
                   {perfil.linkedin  && <a href={perfil.linkedin} target="_blank" rel="noopener noreferrer" className="mp-link">💼 LinkedIn</a>}
                   {perfil.github    && <a href={perfil.github}   target="_blank" rel="noopener noreferrer" className="mp-link">💻 GitHub</a>}
                 </MpSeccion>
+
+                {/* Historial de áreas en BCP */}
+                {perfil.areasRotacion?.length > 0 && (
+                  <MpSeccion titulo="🏦 Áreas en BCP">
+                    {perfil.areasRotacion.map((r, i) => (
+                      <div key={i} className="mp-item">
+                        <p className="mp-item-t" style={{ color:"#003DA5" }}>{r.area}</p>
+                        <p className="mp-item-d">
+                          {r.desdeM} {r.desdeA} – {r.actualmente ? "Actualidad" : `${r.hastaM} ${r.hastaA}`}
+                        </p>
+                      </div>
+                    ))}
+                  </MpSeccion>
+                )}
 
                 {perfil.educacion?.length > 0 && (
                   <MpSeccion titulo="🎓 Formación Académica">
@@ -517,8 +568,22 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
                   </MpSeccion>
                 )}
 
+                {/* Documentos */}
+                {perfil.documentos?.length > 0 && (
+                  <MpSeccion titulo="📎 Documentos">
+                    {perfil.documentos.map((d, i) => (
+                      <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" className="mp-link" style={{ display:"block", marginBottom:4 }}>
+                        📎 {d.nombre}
+                      </a>
+                    ))}
+                  </MpSeccion>
+                )}
+
                 {perfil.movilidad && (
                   <MpSeccion titulo="🗺️ Disponibilidad">
+                    {perfil.jornadaDisponible && (
+                      <p className="mp-dato"><span>🕐</span> {perfil.jornadaDisponible}</p>
+                    )}
                     <div className="mp-movilidad">
                       <span className={`mp-mov ${perfil.movilidad.viajar ? "mp-mov-si":"mp-mov-no"}`}>{perfil.movilidad.viajar ? "✓":"✗"} Viajar</span>
                       <span className={`mp-mov ${perfil.movilidad.reubicacion ? "mp-mov-si":"mp-mov-no"}`}>{perfil.movilidad.reubicacion ? "✓":"✗"} Reubicación</span>

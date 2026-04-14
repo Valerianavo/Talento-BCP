@@ -1,41 +1,26 @@
 import { useState } from "react";
 
-const AREAS = [
-  "Analítica & Tecnología",
-  "Finanzas & Control",
-  "Gestión & Operaciones",
-  "Comunicación & Relación",
-  "Riesgos & Cumplimiento",
-  "Marketing & Experiencia Cliente",
+const AREAS_BCP = [
+  "Analítica & Tecnología","Finanzas & Control","Gestión & Operaciones",
+  "Comunicación & Relación","Riesgos & Cumplimiento","Marketing & Experiencia Cliente",
 ];
+const NIVELES_EDU   = ["Técnico","Universitario (en curso)","Universitario (egresado)","Postgrado","Maestría","Doctorado"];
+const IDIOMAS_OPC   = ["Español","Inglés","Portugués","Francés","Alemán"];
 
-const NIVELES_EDU = [
-  "Técnico",
-  "Universitario (en curso)",
-  "Universitario (egresado)",
-  "Postgrado",
-  "Maestría",
-  "Doctorado",
-];
+const toggle = (arr, val) => arr.includes(val) ? arr.filter(v=>v!==val) : [...arr, val];
 
-const IDIOMAS_OPCIONES = ["Español", "Inglés", "Portugués", "Francés", "Alemán"];
-
-const RANGOS_EXP = ["1–3 meses", "4–6 meses", "6–12 meses", "+12 meses"];
-
-const toggle = (arr, val) =>
-  arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
-
-/* ── GrupoFiltro ── */
-function GrupoFiltro({ titulo, icono, children, inicialAbierto = false }) {
+/* ── grupo colapsable ── */
+function Grupo({ titulo, icono, inicialAbierto=false, badge=0, children }) {
   const [abierto, setAbierto] = useState(inicialAbierto);
   return (
     <div className="fg-grupo">
-      <button className="fg-cabecera" onClick={() => setAbierto((v) => !v)} type="button">
+      <button className="fg-cabecera" onClick={()=>setAbierto(v=>!v)} type="button">
         <span className="fg-cabecera-izq">
           <span className="fg-icono">{icono}</span>
           <span className="fg-titulo">{titulo}</span>
+          {badge > 0 && <span className="fg-badge-mini">{badge}</span>}
         </span>
-        <span className={`fg-chevron ${abierto ? "fg-chevron-open" : ""}`}>❯</span>
+        <span className={`fg-chevron ${abierto?"fg-chevron-open":""}`}>❯</span>
       </button>
       {abierto && <div className="fg-body">{children}</div>}
     </div>
@@ -44,18 +29,18 @@ function GrupoFiltro({ titulo, icono, children, inicialAbierto = false }) {
 
 function Chip({ label, activo, onClick }) {
   return (
-    <button type="button" className={`fg-chip ${activo ? "fg-chip-activo" : ""}`} onClick={onClick}>
+    <button type="button" className={`fg-chip ${activo?"fg-chip-activo":""}`} onClick={onClick}>
       {label}
     </button>
   );
 }
 
-function ToggleSwitch({ activo, onChange, label }) {
+function Toggle({ label, activo, onChange }) {
   return (
     <div className="fg-toggle-row" onClick={onChange}>
       <span className="fg-toggle-label">{label}</span>
-      <div className={`fg-toggle ${activo ? "fg-toggle-on" : ""}`}>
-        <div className="fg-toggle-bola" />
+      <div className={`fg-toggle ${activo?"fg-toggle-on":""}`}>
+        <div className="fg-toggle-bola"/>
       </div>
     </div>
   );
@@ -63,41 +48,39 @@ function ToggleSwitch({ activo, onChange, label }) {
 
 /* ══════════════════════════════════════════
    FILTROS
+   Props:
+     filtros            → estado actual
+     onChange           → fn(nuevosFiltros)
+     skillsDisponibles  → string[] de Firebase
+     esLider            → bool
+     abierto            → bool (mobile drawer)
+     onCerrar           → fn()
 ══════════════════════════════════════════ */
-function Filtros({
-  filtros,
-  onChange,
-  skillsDisponibles = [],
-  favoritosIds = [],
-  esLider = false,
-  abierto = false,
-  onCerrar,
-}) {
+function Filtros({ filtros, onChange, skillsDisponibles=[], esLider=false, abierto=false, onCerrar }) {
   const upd = (campo, valor) => onChange({ ...filtros, [campo]: valor });
-  const toggleMulti = (campo, val) =>
-    onChange({ ...filtros, [campo]: toggle(filtros[campo] || [], val) });
+  const tgl = (campo, val)   => onChange({ ...filtros, [campo]: toggle(filtros[campo]||[], val) });
 
+  /* contadores para badges */
+  const cntArea = filtros.areasActuales.length + filtros.areasAnteriores.length;
   const total =
-    filtros.areas.length +
-    filtros.skills.length +
-    filtros.idiomas.length +
+    cntArea + filtros.skills.length + filtros.idiomas.length +
     filtros.nivelEducacion.length +
-    (filtros.rangoExperiencia || []).length +
-    (filtros.soloFavoritos ? 1 : 0) +
-    (filtros.soloConProyectos ? 1 : 0);
+    (filtros.soloFavoritos    ? 1 : 0) +
+    (filtros.soloConProyectos ? 1 : 0) +
+    (filtros.soloConRotaciones? 1 : 0);
 
-  const limpiar = () =>
-    onChange({
-      ...filtros,
-      areas: [], skills: [], idiomas: [], nivelEducacion: [],
-      rangoExperiencia: [], soloFavoritos: false, soloConProyectos: false,
-    });
+  const limpiar = () => onChange({
+    ...filtros,
+    areasActuales: [], areasAnteriores: [], skills: [],
+    idiomas: [], nivelEducacion: [],
+    soloFavoritos: false, soloConProyectos: false, soloConRotaciones: false,
+  });
 
   return (
     <>
-      {abierto && <div className="filtros-overlay" onClick={onCerrar} />}
+      {abierto && <div className="filtros-overlay" onClick={onCerrar}/>}
 
-      <aside className={`filtros-panel ${abierto ? "filtros-panel-open" : ""}`}>
+      <aside className={`filtros-panel ${abierto?"filtros-panel-open":""}`}>
 
         {/* HEADER */}
         <div className="filtros-header">
@@ -113,96 +96,107 @@ function Filtros({
 
         <div className="filtros-scroll">
 
-          {/* FAVORITOS (solo líderes) */}
+          {/* FAVORITOS — solo líderes */}
           {esLider && (
             <div className="fg-grupo">
-              <button className="fg-cabecera fg-cabecera-flat" type="button">
+              <div className="fg-cabecera fg-cabecera-flat">
                 <span className="fg-cabecera-izq">
                   <span className="fg-icono">☆</span>
                   <span className="fg-titulo">Talentos favoritos</span>
                 </span>
-                <input
-                  type="checkbox"
-                  className="fg-checkbox"
+                <input type="checkbox" className="fg-checkbox"
                   checked={filtros.soloFavoritos}
-                  onChange={() => upd("soloFavoritos", !filtros.soloFavoritos)}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </button>
+                  onChange={()=>upd("soloFavoritos",!filtros.soloFavoritos)}
+                  onClick={e=>e.stopPropagation()}/>
+              </div>
             </div>
           )}
 
-          {/* TAGS / SKILLS TÉCNICAS */}
-          <GrupoFiltro titulo="Tags / Skills técnicas" icono="🏷️" inicialAbierto={true}>
-            <p className="fg-hint">Tecnologías y herramientas</p>
+          {/* SKILLS */}
+          <Grupo titulo="Skills / Tags" icono="⚡" inicialAbierto={true} badge={filtros.skills.length}>
+            <p className="fg-hint">Filtra por tecnologías y herramientas</p>
             {skillsDisponibles.length > 0 ? (
               <div className="fg-chips-wrap">
-                {skillsDisponibles.slice(0, 30).map((s) => (
-                  <Chip key={s} label={s} activo={filtros.skills.includes(s)} onClick={() => toggleMulti("skills", s)} />
+                {skillsDisponibles.slice(0,30).map(s=>(
+                  <Chip key={s} label={s} activo={filtros.skills.includes(s)} onClick={()=>tgl("skills",s)}/>
                 ))}
               </div>
-            ) : (
-              <p className="fg-empty">Sin skills disponibles aún</p>
-            )}
-          </GrupoFiltro>
+            ) : <p className="fg-empty">Cargando skills...</p>}
+          </Grupo>
 
-          {/* EXPERIENCIA */}
-          <GrupoFiltro titulo="Experiencia" icono="💼">
-            <p className="fg-hint">Tiempo total de experiencia acumulada</p>
+          {/* ÁREA BCP — diferenciado actual vs anterior */}
+          <Grupo titulo="Área de vacantes" icono="🏦" badge={cntArea}>
+            {/* área ACTUAL */}
+            <p className="fg-subgrupo-label">
+              <span className="fg-subgrupo-dot fg-dot-actual"/>
+              Área actual
+            </p>
+            <p className="fg-hint">El área en la que trabaja actualmente</p>
             <div className="fg-chips-wrap">
-              {RANGOS_EXP.map((r) => (
-                <Chip
-                  key={r}
-                  label={r}
-                  activo={(filtros.rangoExperiencia || []).includes(r)}
-                  onClick={() => toggleMulti("rangoExperiencia", r)}
-                />
+              {AREAS_BCP.map(a=>(
+                <Chip key={`act-${a}`} label={a}
+                  activo={filtros.areasActuales.includes(a)}
+                  onClick={()=>tgl("areasActuales",a)}/>
               ))}
             </div>
-            <div style={{ marginTop: 10 }}>
-              <ToggleSwitch
-                activo={filtros.soloConProyectos}
-                onChange={() => upd("soloConProyectos", !filtros.soloConProyectos)}
-                label="Con proyectos destacados"
+
+            {/* área ANTERIOR */}
+            <p className="fg-subgrupo-label" style={{marginTop:14}}>
+              <span className="fg-subgrupo-dot fg-dot-anterior"/>
+              Áreas anteriores en BCP
+            </p>
+            <p className="fg-hint">Áreas por las que ha rotado anteriormente</p>
+            <div className="fg-chips-wrap">
+              {AREAS_BCP.map(a=>(
+                <Chip key={`ant-${a}`} label={a}
+                  activo={filtros.areasAnteriores.includes(a)}
+                  onClick={()=>tgl("areasAnteriores",a)}/>
+              ))}
+            </div>
+
+            {/* toggle: con historial BCP */}
+            <div style={{marginTop:12}}>
+              <Toggle
+                label="Solo con historial en BCP"
+                activo={filtros.soloConRotaciones}
+                onChange={()=>upd("soloConRotaciones",!filtros.soloConRotaciones)}
               />
             </div>
-          </GrupoFiltro>
-
-          {/* FORMACIÓN */}
-          <GrupoFiltro titulo="Formación" icono="🎓">
-            <div className="fg-chips-wrap">
-              {NIVELES_EDU.map((n) => (
-                <Chip key={n} label={n} activo={filtros.nivelEducacion.includes(n)} onClick={() => toggleMulti("nivelEducacion", n)} />
-              ))}
-            </div>
-          </GrupoFiltro>
+          </Grupo>
 
           {/* IDIOMAS */}
-          <GrupoFiltro titulo="Idiomas" icono="🌍">
+          <Grupo titulo="Idiomas" icono="🌍" badge={filtros.idiomas.length}>
             <div className="fg-chips-wrap">
-              {IDIOMAS_OPCIONES.map((id) => (
-                <Chip key={id} label={id} activo={filtros.idiomas.includes(id)} onClick={() => toggleMulti("idiomas", id)} />
+              {IDIOMAS_OPC.map(id=>(
+                <Chip key={id} label={id} activo={filtros.idiomas.includes(id)} onClick={()=>tgl("idiomas",id)}/>
               ))}
             </div>
-          </GrupoFiltro>
+          </Grupo>
 
-          {/* ÁREA DE VACANTES */}
-          <GrupoFiltro titulo="Área de vacantes" icono="👥">
-            <p className="fg-hint">Un practicante puede haber rotado por varias áreas</p>
+          {/* FORMACIÓN */}
+          <Grupo titulo="Formación" icono="🎓" badge={filtros.nivelEducacion.length}>
             <div className="fg-chips-wrap">
-              {AREAS.map((a) => (
-                <Chip key={a} label={a} activo={filtros.areas.includes(a)} onClick={() => toggleMulti("areas", a)} />
+              {NIVELES_EDU.map(n=>(
+                <Chip key={n} label={n} activo={filtros.nivelEducacion.includes(n)} onClick={()=>tgl("nivelEducacion",n)}/>
               ))}
             </div>
-          </GrupoFiltro>
+          </Grupo>
+
+          {/* PROYECTOS */}
+          <Grupo titulo="Proyectos" icono="🚀">
+            <Toggle
+              label="Con proyectos destacados"
+              activo={filtros.soloConProyectos}
+              onChange={()=>upd("soloConProyectos",!filtros.soloConProyectos)}
+            />
+          </Grupo>
 
         </div>
 
-        {/* BOTÓN APLICAR mobile */}
+        {/* APLICAR mobile */}
         <div className="filtros-footer-mobile">
           <button className="filtros-aplicar-btn" onClick={onCerrar}>Ver resultados →</button>
         </div>
-
       </aside>
     </>
   );
