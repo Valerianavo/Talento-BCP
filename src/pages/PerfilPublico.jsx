@@ -3,12 +3,25 @@ import { useParams, useNavigate } from "react-router-dom";
 import { db, auth } from "../firebase/firebase";
 import { doc, getDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import Navbar from "../components/Navbar.jsx";
 import "../stylesheets/Perfil.css";
 
+import {
+  FiMapPin, FiPhone, FiMail, FiCalendar,
+  FiLinkedin, FiGithub, FiExternalLink, FiStar, FiMail as FiMailContact,
+} from "react-icons/fi";
+import {
+  MdWorkOutline, MdSchool, MdLanguage, MdMenuBook,
+  MdRocketLaunch, MdBolt,
+} from "react-icons/md";
+import { HiOutlineBriefcase } from "react-icons/hi";
+import { BsBuilding, BsTrophy } from "react-icons/bs";
+import { TbCertificate } from "react-icons/tb";
+
 function PerfilPublico() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { id }     = useParams();
+  const navigate   = useNavigate();
 
   const [perfil,     setPerfil]     = useState(null);
   const [cargando,   setCargando]   = useState(true);
@@ -17,276 +30,337 @@ function PerfilPublico() {
   const [favorito,   setFavorito]   = useState(false);
   const [liderDocId, setLiderDocId] = useState(null);
 
+  /* ── Auth ── */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUsuario(u);
-      if (u) {
-        const esCorreoBCP = u.email?.endsWith("@bcp.com");
-        setEsLider(esCorreoBCP);
-        if (esCorreoBCP) {
-          const { collection, query, where, getDocs } = await import("firebase/firestore");
-          const snap = await getDocs(
-            query(collection(db, "lideres"), where("uid", "==", u.uid))
-          );
-          if (!snap.empty) {
-            const liderDoc = snap.docs[0];
-            setLiderDocId(liderDoc.id);
-            setFavorito((liderDoc.data().favoritos || []).includes(id));
-          }
+      if (!u) return;
+      const esL = !!u.email?.endsWith("@bcp.com");
+      setEsLider(esL);
+      if (esL) {
+        const snap = await getDocs(
+          query(collection(db, "lideres"), where("uid", "==", u.uid))
+        );
+        if (!snap.empty) {
+          const d = snap.docs[0];
+          setLiderDocId(d.id);
+          setFavorito((d.data().favoritos || []).includes(id));
         }
       }
     });
     return () => unsub();
   }, [id]);
 
+  /* ── Cargar perfil ── */
   useEffect(() => {
-    const obtenerPerfil = async () => {
+    const cargar = async () => {
       try {
         const snap = await getDoc(doc(db, "practicantes", id));
         if (snap.exists()) setPerfil(snap.data());
-      } catch (error) { console.error(error); }
+      } catch (e) { console.error(e); }
       finally { setCargando(false); }
     };
-    obtenerPerfil();
+    cargar();
   }, [id]);
 
-  const toggleFavorito = async () => {
+  /* ── Toggle favorito ── */
+  const toggleFav = async () => {
     if (!esLider || !liderDocId) return;
     const ref = doc(db, "lideres", liderDocId);
-    if (favorito) await updateDoc(ref, { favoritos: arrayRemove(id) });
-    else          await updateDoc(ref, { favoritos: arrayUnion(id) });
+    await updateDoc(ref, { favoritos: favorito ? arrayRemove(id) : arrayUnion(id) });
     setFavorito(!favorito);
   };
 
   const contactar = () => {
-    if (!perfil?.email) return;
-    window.location.href = `mailto:${perfil.email}?subject=Oportunidad BCP – Hola ${perfil.nombre}`;
-  };
-
-  const volver = () => {
-    if (window.history.length > 1) navigate(-1);
-    else navigate("/catalogo");
+    if (perfil?.email)
+      window.location.href = `mailto:${perfil.email}?subject=Oportunidad BCP – Hola ${perfil.nombre}`;
   };
 
   if (cargando) return (
-    <div className="pantalla-carga"><div className="spinner-bcp" /><p>Cargando perfil...</p></div>
+    <div className="pantalla-carga"><div className="spinner-bcp"/><p>Cargando perfil...</p></div>
   );
-  if (!perfil) return <p className="text-center mt-5">No se encontró el perfil.</p>;
-
-  const ubicacion = [perfil.ciudad, perfil.pais].filter(Boolean).join(", ") || perfil.distrito || null;
+  if (!perfil) return (
+    <div className="pantalla-carga"><p>No se encontró el perfil.</p></div>
+  );
 
   return (
-    <div>
+    <div className="perfil-wrapper">
       <Navbar />
-      <div className="container mt-3" style={{ maxWidth: 820 }}>
 
-        {/* ← VOLVER (top) */}
-        <button className="btn btn-sm btn-outline-secondary mb-3" onClick={volver}
-          style={{ display:"flex", alignItems:"center", gap:6 }}>
-          ← Volver al catálogo
-        </button>
+      <div className="publico-container">
 
-        {/* HEADER */}
-        <div className="card p-0 mb-3 overflow-hidden shadow-sm">
-          <div style={{ height:80, background:"linear-gradient(135deg, #003DA5 0%, #0055CC 100%)" }} />
-          <div className="p-4 pt-0">
-            <div className="d-flex align-items-end justify-content-between" style={{ marginTop:-36 }}>
-              <div className="avatar-publico">
-                {perfil.foto
-                  ? <img src={perfil.foto} alt={perfil.nombre} className="avatar-img" />
-                  : <span>{perfil.nombre?.charAt(0)?.toUpperCase()}</span>
-                }
-              </div>
-              {esLider && (
-                <div className="d-flex gap-2 mt-4">
-                  <button className={`btn btn-sm ${favorito ? "btn-warning" : "btn-outline-warning"}`} onClick={toggleFavorito}>
-                    {favorito ? "⭐ Guardado" : "☆ Guardar"}
-                  </button>
-                  <button className="btn btn-sm btn-primary" onClick={contactar}>📩 Contactar</button>
+        {/* ══ HEADER ══ */}
+        <div className="pub-header-card">
+          <div className="pub-banner" />
+          <div className="pub-header-body">
+            <div className="pub-avatar">
+              {perfil.foto
+                ? <img src={perfil.foto} alt={perfil.nombre} />
+                : <span>{perfil.nombre?.charAt(0)?.toUpperCase()}</span>
+              }
+            </div>
+            <div className="pub-header-info">
+              <div className="pub-nombre-row">
+                <div>
+                  <h2 className="pub-nombre">{perfil.nombre} {perfil.apellidos}</h2>
+                  <p className="pub-titulo">{perfil.titulo || "Sin título"}</p>
+                  <div className="pub-badges">
+                    {perfil.area && <span className="pub-badge-area">{perfil.area}</span>}
+                    {(perfil.ciudad||perfil.pais) && (
+                      <span className="pub-badge-loc">
+                        <FiMapPin size={11}/> {[perfil.ciudad,perfil.pais].filter(Boolean).join(", ")}
+                      </span>
+                    )}
+                    {perfil.movilidad?.viajar && <span className="pub-badge-viaje">✈️ Disponible a viajar</span>}
+                  </div>
+                  <div className="pub-links">
+                    {perfil.linkedin && (
+                      <a href={perfil.linkedin} target="_blank" rel="noopener noreferrer" className="pub-link">
+                        <FiLinkedin size={13}/> LinkedIn
+                      </a>
+                    )}
+                    {perfil.github && (
+                      <a href={perfil.github} target="_blank" rel="noopener noreferrer" className="pub-link">
+                        <FiGithub size={13}/> GitHub
+                      </a>
+                    )}
+                  </div>
                 </div>
-              )}
-              {!usuario && (
-                <button className="btn btn-sm btn-outline-primary mt-4" onClick={() => navigate("/auth-lider")}>
-                  🔑 Acceso líder
-                </button>
-              )}
-            </div>
-            <h4 className="mt-2 mb-0">{perfil.nombre} {perfil.apellidos}</h4>
-            <p className="text-muted mb-1">{perfil.titulo || "Sin título"}</p>
-            <div className="d-flex gap-2 flex-wrap">
-              {perfil.area && <span className="badge bg-primary">{perfil.area}</span>}
-              {ubicacion   && <span className="badge bg-secondary">📍 {ubicacion}</span>}
-              {perfil.movilidad?.viajar && <span className="badge bg-success">✈️ Disponible a viajar</span>}
-            </div>
-            <div className="mt-2">
-              {perfil.linkedin && <a href={perfil.linkedin} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-secondary me-2">💼 LinkedIn</a>}
-              {perfil.github   && <a href={perfil.github}   target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-dark">💻 GitHub</a>}
+
+                {/* acciones líder */}
+                {esLider && (
+                  <div className="pub-acciones">
+                    <button
+                      className={`pub-btn-fav ${favorito ? "pub-btn-fav-on" : ""}`}
+                      onClick={toggleFav}
+                    >
+                      <FiStar size={14}/> {favorito ? "Guardado" : "Guardar"}
+                    </button>
+                    <button className="pub-btn-contactar" onClick={contactar}>
+                      <FiMailContact size={14}/> Contactar
+                    </button>
+                  </div>
+                )}
+                {!usuario && (
+                  <button className="pub-btn-lider" onClick={() => navigate("/auth-lider")}>
+                    🔑 Acceso líder
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {(perfil.resumen || perfil.intereses) && (
-          <SP titulo="Acerca de" icono="👤">
-            {perfil.resumen   && <p>{perfil.resumen}</p>}
-            {perfil.intereses && <p><strong>Intereses:</strong> {perfil.intereses}</p>}
-          </SP>
-        )}
+        {/* ══ BODY: 2 columnas ══ */}
+        <div className="pub-body">
 
-        {perfil.experiencia?.length > 0 && (
-          <SP titulo="Experiencia" icono="💼">
-            {perfil.experiencia.map((exp, i) => (
-              <div key={i} className="item-lista">
-                <div className="item-icono">🏢</div>
-                <div className="item-contenido">
-                  <p className="item-titulo">{exp.cargo}</p>
-                  {exp.empresa && <p className="item-subtitulo">{exp.empresa}</p>}
-                  <p className="item-fecha">
-                    {exp.actualmente ? `${exp.desdeM} ${exp.desdeA} — Actualidad` : `${exp.desdeM} ${exp.desdeA} — ${exp.hastaM} ${exp.hastaA}`}
-                  </p>
-                  {exp.funciones && <p className="item-descripcion">{exp.funciones}</p>}
+          {/* ── COLUMNA IZQUIERDA ── */}
+          <aside className="pub-sidebar">
+
+            {/* Datos personales */}
+            <PubSeccion titulo="Datos personales">
+              {perfil.email     && <PubDato Icon={FiMail}     val={perfil.email}/>}
+              {perfil.telefono  && <PubDato Icon={FiPhone}    val={perfil.telefono}/>}
+              {(perfil.ciudad||perfil.pais) && (
+                <PubDato Icon={FiMapPin} val={[perfil.ciudad,perfil.distrito,perfil.pais].filter(Boolean).join(", ")}/>
+              )}
+              {perfil.fechaNacimiento && <PubDato Icon={FiCalendar} val={perfil.fechaNacimiento}/>}
+              {perfil.genero && <PubDato Icon={()=><span style={{fontSize:13}}>👤</span>} val={perfil.genero}/>}
+            </PubSeccion>
+
+            {/* Formación */}
+            {perfil.educacion?.length > 0 && (
+              <PubSeccion titulo="Formación Académica" Icono={MdSchool}>
+                {perfil.educacion.map((e, i) => (
+                  <div key={i} className="pub-item">
+                    <p className="pub-item-t">{e.institucion}</p>
+                    {e.carrera && <p className="pub-item-s">Carrera: {e.carrera}</p>}
+                    {e.nivel   && <p className="pub-item-s">{e.nivel}</p>}
+                    <p className="pub-item-d">
+                      {e.actualmente
+                        ? `${e.desdeM} ${e.desdeA} — Actualidad`
+                        : `${e.desdeM||""} ${e.desdeA||""}${e.hastaA?` — ${e.hastaM} ${e.hastaA}`:""}`}
+                    </p>
+                  </div>
+                ))}
+              </PubSeccion>
+            )}
+
+            {/* Idiomas */}
+            {perfil.idiomas?.length > 0 && (
+              <PubSeccion titulo="Idiomas" Icono={MdLanguage}>
+                <div className="pub-idiomas">
+                  {perfil.idiomas.map((id, i) => (
+                    <div key={i} className="idioma-chip">
+                      <span className="idioma-nombre">{id.idioma}</span>
+                      <span className={`idioma-nivel nivel-${(id.nivel||"").toLowerCase().replace(/\s+/g,"-")}`}>{id.nivel}</span>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </SP>
-        )}
+              </PubSeccion>
+            )}
 
-        {perfil.proyectos?.length > 0 && (
-          <SP titulo="Proyectos destacados" icono="🚀">
-            <div className="proyectos-grid">
-              {perfil.proyectos.map((p, i) => (
-                <div key={i} className="proyecto-card">
-                  <div className="proyecto-header">
-                    <span className="proyecto-icono">🚀</span>
+            {/* Movilidad */}
+            {perfil.movilidad && (
+              <PubSeccion titulo="Disponibilidad">
+                <div className="pub-movilidad">
+                  <span className={`pub-mov ${perfil.movilidad.viajar?"pub-mov-si":"pub-mov-no"}`}>
+                    {perfil.movilidad.viajar?"✓":"✗"} Viajar
+                  </span>
+                  <span className={`pub-mov ${perfil.movilidad.reubicacion?"pub-mov-si":"pub-mov-no"}`}>
+                    {perfil.movilidad.reubicacion?"✓":"✗"} Reubicación
+                  </span>
+                  <span className={`pub-mov ${perfil.movilidad.vehiculo?"pub-mov-si":"pub-mov-no"}`}>
+                    {perfil.movilidad.vehiculo?"✓":"✗"} Vehículo
+                  </span>
+                </div>
+              </PubSeccion>
+            )}
+          </aside>
+
+          {/* ── COLUMNA DERECHA ── */}
+          <div className="pub-main">
+
+            {/* Resumen */}
+            {(perfil.resumen || perfil.intereses) && (
+              <PubSeccion titulo="Perfil Profesional">
+                {perfil.resumen && <p className="pub-resumen">{perfil.resumen}</p>}
+                {perfil.intereses && <p className="pub-intereses"><strong>Intereses:</strong> {perfil.intereses}</p>}
+              </PubSeccion>
+            )}
+
+            {/* Experiencia */}
+            {perfil.experiencia?.length > 0 && (
+              <PubSeccion titulo="Experiencia / Prácticas" Icono={HiOutlineBriefcase}>
+                {perfil.experiencia.map((exp, i) => (
+                  <div key={i} className="pub-item pub-item-row">
+                    <div className="pub-item-icono"><BsBuilding size={16}/></div>
                     <div>
-                      <p className="proyecto-nombre">{p.nombre}</p>
-                      {p.rol && <p className="proyecto-rol">{p.rol}</p>}
+                      <p className="pub-item-t">{exp.cargo}</p>
+                      {exp.empresa && <p className="pub-item-s">{exp.empresa}</p>}
+                      <p className="pub-item-d">
+                        {exp.actualmente
+                          ? `${exp.desdeM} ${exp.desdeA} — Actualidad`
+                          : `${exp.desdeM} ${exp.desdeA} — ${exp.hastaM} ${exp.hastaA}`}
+                      </p>
+                      {exp.funciones && <p className="pub-item-desc">{exp.funciones}</p>}
                     </div>
                   </div>
-                  {p.descripcion && <p className="proyecto-desc">{p.descripcion}</p>}
-                  <div className="proyecto-meta">
-                    {p.tecnologias && (
-                      <div className="proyecto-tags">
-                        {p.tecnologias.split(",").map((t, j) => <span key={j} className="tag tag-tecnico tag-sm">{t.trim()}</span>)}
+                ))}
+              </PubSeccion>
+            )}
+
+            {/* Proyectos */}
+            {perfil.proyectos?.length > 0 && (
+              <PubSeccion titulo="Proyectos destacados" Icono={MdRocketLaunch}>
+                <div className="proyectos-grid">
+                  {perfil.proyectos.map((p, i) => (
+                    <div key={i} className="proyecto-card">
+                      <div className="proyecto-header">
+                        <MdRocketLaunch size={18} className="proyecto-icono"/>
+                        <div>
+                          <p className="proyecto-nombre">{p.nombre}</p>
+                          {p.rol && <p className="proyecto-rol">{p.rol}</p>}
+                        </div>
                       </div>
-                    )}
-                    {p.url && <a href={p.url} target="_blank" rel="noopener noreferrer" className="proyecto-link">🔗 Ver proyecto</a>}
-                  </div>
+                      {p.descripcion && <p className="proyecto-desc">{p.descripcion}</p>}
+                      <div className="proyecto-meta">
+                        {p.tecnologias && (
+                          <div className="proyecto-tags">
+                            {p.tecnologias.split(",").map((t,j)=>(
+                              <span key={j} className="tag tag-tecnico tag-sm">{t.trim()}</span>
+                            ))}
+                          </div>
+                        )}
+                        {p.url && (
+                          <a href={p.url} target="_blank" rel="noopener noreferrer" className="proyecto-link">
+                            <FiExternalLink size={11}/> Ver proyecto
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </SP>
-        )}
+              </PubSeccion>
+            )}
 
-        {perfil.educacion?.length > 0 && (
-          <SP titulo="Formación académica" icono="🎓">
-            {perfil.educacion.map((edu, i) => (
-              <div key={i} className="item-lista">
-                <div className="item-icono">🏫</div>
-                <div className="item-contenido">
-                  <p className="item-titulo">{edu.institucion}</p>
-                  {edu.carrera && <p className="item-subtitulo">{edu.carrera}</p>}
-                  <p className="item-fecha">
-                    {edu.nivel} · {edu.actualmente
-                      ? `${edu.desdeM} ${edu.desdeA} — Actualidad`
-                      : `${edu.desdeM} ${edu.desdeA}${edu.hastaA ? ` — ${edu.hastaM} ${edu.hastaA}` : ""}`}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </SP>
-        )}
-
-        {perfil.idiomas?.length > 0 && (
-          <SP titulo="Idiomas" icono="🌍">
-            <div className="idiomas-grid">
-              {perfil.idiomas.map((id, i) => (
-                <div key={i} className="idioma-chip">
-                  <span className="idioma-nombre">{id.idioma}</span>
-                  <span className={`idioma-nivel nivel-${(id.nivel||"").toLowerCase().replace(/\s+/g,"-")}`}>{id.nivel}</span>
-                </div>
-              ))}
-            </div>
-          </SP>
-        )}
-
-        {perfil.cursos?.length > 0 && (
-          <SP titulo="Cursos y certificados" icono="📚">
-            <div className="cursos-lista">
-              {perfil.cursos.map((c, i) => (
-                <div key={i} className="curso-item">
-                  <div className="curso-icono">{c.tipo === "Certificado" ? "🏅" : "📖"}</div>
-                  <div className="curso-contenido">
-                    <p className="curso-nombre">{c.nombre}</p>
-                    {c.institucion && <p className="curso-inst">{c.institucion}</p>}
-                    <div className="curso-meta">
-                      {c.tipo && <span className="tag-curso">{c.tipo}</span>}
-                      {c.anio && <span className="curso-fecha">{c.anio}</span>}
+            {/* Habilidades */}
+            {(perfil.skills?.length > 0 || perfil.habilidadesBlandas?.length > 0) && (
+              <PubSeccion titulo="Habilidades y Competencias" Icono={MdBolt}>
+                {perfil.skills?.length > 0 && (
+                  <div className="skills-grupo">
+                    <p className="pub-skills-cat pub-skills-tec">Habilidades Técnicas:</p>
+                    <div className="skills-tags">
+                      {perfil.skills.map((s,i)=><span key={i} className="tag tag-tecnico">{s}</span>)}
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </SP>
-        )}
-
-        {(perfil.skills?.length > 0 || perfil.habilidadesBlandas?.length > 0) && (
-          <SP titulo="Habilidades" icono="⚡">
-            {perfil.skills?.length > 0 && (
-              <div className="skills-grupo">
-                <p className="skills-subtitulo" style={{ color:"#003DA5" }}>Habilidades técnicas</p>
-                <div className="skills-tags">
-                  {perfil.skills.map((s, i) => <span key={i} className="tag tag-tecnico">{s}</span>)}
-                </div>
-              </div>
+                )}
+                {perfil.habilidadesBlandas?.length > 0 && (
+                  <div className="skills-grupo" style={{marginTop:12}}>
+                    <p className="pub-skills-cat pub-skills-bla">Habilidades Blandas:</p>
+                    <div className="skills-tags">
+                      {perfil.habilidadesBlandas.map((s,i)=><span key={i} className="tag tag-blando">{s}</span>)}
+                    </div>
+                  </div>
+                )}
+              </PubSeccion>
             )}
-            {perfil.habilidadesBlandas?.length > 0 && (
-              <div className="skills-grupo" style={{ marginTop:12 }}>
-                <p className="skills-subtitulo" style={{ color:"#5c7d3e" }}>Habilidades blandas</p>
-                <div className="skills-tags">
-                  {perfil.habilidadesBlandas.map((s, i) => <span key={i} className="tag tag-blando">{s}</span>)}
+
+            {/* Cursos */}
+            {perfil.cursos?.length > 0 && (
+              <PubSeccion titulo="Logros y Participaciones" Icono={TbCertificate}>
+                <div className="cursos-lista">
+                  {perfil.cursos.map((c, i) => (
+                    <div key={i} className="curso-item">
+                      <div className="curso-icono">
+                        {c.tipo==="Certificado" ? <BsTrophy size={15}/> : <MdMenuBook size={15}/>}
+                      </div>
+                      <div className="curso-contenido">
+                        <p className="curso-nombre">{c.nombre}</p>
+                        {c.institucion && <p className="curso-inst">{c.institucion}{c.anio?` · ${c.anio}`:""}</p>}
+                        {c.tipo && <span className="tag-curso">{c.tipo}</span>}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              </PubSeccion>
             )}
-          </SP>
-        )}
 
-        {perfil.movilidad && (
-          <SP titulo="Disponibilidad" icono="🗺️">
-            <div className="d-flex gap-2 flex-wrap">
-              <span className={`badge ${perfil.movilidad.viajar ? "bg-success":"bg-secondary"}`}>{perfil.movilidad.viajar ? "✓":"✗"} Disponible a viajar</span>
-              <span className={`badge ${perfil.movilidad.reubicacion ? "bg-success":"bg-secondary"}`}>{perfil.movilidad.reubicacion ? "✓":"✗"} Reubicación</span>
-              <span className={`badge ${perfil.movilidad.vehiculo ? "bg-success":"bg-secondary"}`}>{perfil.movilidad.vehiculo ? "✓":"✗"} Vehículo propio</span>
+            {/* Confidencial */}
+            <div className="pub-confidencial">
+              🔒 Uso exclusivo para gestión interna del BCP
             </div>
-          </SP>
-        )}
+          </div>
+        </div>
 
+        {/* banner para no logueados */}
         {!usuario && (
-          <div className="card p-3 mb-3 text-center" style={{ background:"#f0f4ff", border:"1px solid #003DA5" }}>
-            <p className="mb-2" style={{ color:"#003DA5", fontWeight:600 }}>
-              ¿Eres líder BCP? Inicia sesión para guardar favoritos y contactar talento
-            </p>
-            <button className="btn btn-primary btn-sm" onClick={() => navigate("/auth-lider")}>
-              Acceso para líderes
-            </button>
+          <div className="pub-banner-lider">
+            <p>¿Eres líder BCP? Inicia sesión para guardar favoritos y contactar talento</p>
+            <button onClick={() => navigate("/auth-lider")}>Acceso para líderes</button>
           </div>
         )}
-
-        {/* ← VOLVER (bottom) */}
-        <button className="btn btn-outline-secondary w-100 mb-4" onClick={volver}>
-          ← Volver al catálogo
-        </button>
-
-        <div style={{ height:20 }} />
       </div>
     </div>
   );
 }
 
-function SP({ titulo, icono, children }) {
+/* helpers */
+function PubSeccion({ titulo, Icono, children }) {
   return (
-    <div className="card p-3 mb-3 shadow-sm">
-      <h5 style={{ color:"#003DA5", fontWeight:700, marginBottom:12 }}>{icono} {titulo}</h5>
+    <div className="pub-seccion">
+      <h6 className="pub-seccion-t">
+        {Icono && <Icono size={14} style={{marginRight:6}}/>}{titulo}
+      </h6>
       {children}
+    </div>
+  );
+}
+function PubDato({ Icon, val }) {
+  return (
+    <div className="pub-dato">
+      <Icon size={13} style={{flexShrink:0, color:"#003DA5"}}/>
+      <span>{val}</span>
     </div>
   );
 }
