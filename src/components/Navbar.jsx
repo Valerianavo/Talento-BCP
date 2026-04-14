@@ -3,10 +3,20 @@ import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../firebase/firebase";
 import { signOut, onAuthStateChanged } from "firebase/auth";
 import "../stylesheets/Navbar.css";
+import logoBCP from "../images/LogoBCP.png";
+
+// ICONOS
+import {
+  FaHome,
+  FaUsers,
+  FaChartBar,
+  FaUser,
+  FaSignOutAlt,
+} from "react-icons/fa";
 
 function Navbar() {
-  const [user,     setUser]     = useState(null);
-  const [esLider,  setEsLider]  = useState(false);
+  const [user, setUser] = useState(null);
+  const [esLider, setEsLider] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,44 +34,59 @@ function Navbar() {
 
   return (
     <nav className="navbar-custom">
-      <h2 onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
-        Talento BCP
-      </h2>
+      {/* LOGO */}
+      <div className="logo-container" onClick={() => navigate("/")}>
+        <img src={logoBCP} alt="BCP" className="logo-img" />
+        <span className="logo-text">| Talento BCP</span>
+      </div>
 
-      <div>
-        <Link to="/" className="btn btn-light btn-sm me-2">
+      {/* NAV LINKS */}
+      <div className="nav-actions">
+        <Link to="/" className="nav-link">
+          <FaHome className="icon-btn" />
           Inicio
         </Link>
 
-        <Link to="/catalogo" className="btn btn-warning btn-sm me-2">
-          Ver talento
+        <Link to="/catalogo" className="nav-link">
+          <FaUsers className="icon-btn" />
+          Talento
         </Link>
 
         {user ? (
           <>
-            {/* Líder */}
             {esLider ? (
-              <Link to="/dashboard-lider" className="btn btn-primary btn-sm me-2">
-                📊 Dashboard
+              <Link
+                to="/dashboard-lider"
+                className="nav-link nav-highlight"
+              >
+                <FaChartBar className="icon-btn" />
+                Dashboard
               </Link>
             ) : (
-              /* Practicante */
-              <Link to="/perfil" className="btn btn-light btn-sm me-2">
+              <Link to="/perfil" className="nav-link">
+                <FaUser className="icon-btn" />
                 Mi perfil
               </Link>
             )}
 
-            <button className="btn btn-danger btn-sm" onClick={cerrarSesion}>
-              Cerrar sesión
+            <button
+              className="nav-link nav-logout"
+              onClick={cerrarSesion}
+            >
+              <FaSignOutAlt className="icon-btn" />
+              Salir
             </button>
           </>
         ) : (
           <>
-            <Link to="/auth" className="btn btn-light btn-sm me-2">
-              Soy practicante
+            <Link to="/auth" className="nav-link">
+              <FaUser className="icon-btn" />
+              Practicante
             </Link>
-            <Link to="/auth-lider" className="btn btn-warning btn-sm">
-              Soy líder
+
+            <Link to="/auth-lider" className="nav-link nav-highlight">
+              <FaUsers className="icon-btn" />
+              Líder
             </Link>
           </>
         )}
