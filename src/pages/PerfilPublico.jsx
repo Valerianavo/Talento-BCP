@@ -9,19 +9,21 @@ import "../stylesheets/Perfil.css";
 
 import {
   FiMapPin, FiPhone, FiMail, FiCalendar,
-  FiLinkedin, FiGithub, FiExternalLink, FiStar, FiMail as FiMailContact,
+  FiLinkedin, FiGithub, FiExternalLink,
+  FiStar, FiArrowLeft, FiLock,
 } from "react-icons/fi";
 import {
   MdWorkOutline, MdSchool, MdLanguage, MdMenuBook,
   MdRocketLaunch, MdBolt,
 } from "react-icons/md";
-import { HiOutlineBriefcase } from "react-icons/hi";
-import { BsBuilding, BsTrophy } from "react-icons/bs";
+import { HiOutlineBriefcase, HiOutlineOfficeBuilding } from "react-icons/hi";
+import { BsBuilding, BsTrophy, BsPersonVcard } from "react-icons/bs";
 import { TbCertificate } from "react-icons/tb";
+import { RiTeamLine } from "react-icons/ri";
 
 function PerfilPublico() {
-  const { id }     = useParams();
-  const navigate   = useNavigate();
+  const { id }   = useParams();
+  const navigate = useNavigate();
 
   const [perfil,     setPerfil]     = useState(null);
   const [cargando,   setCargando]   = useState(true);
@@ -76,6 +78,12 @@ function PerfilPublico() {
       window.location.href = `mailto:${perfil.email}?subject=Oportunidad BCP – Hola ${perfil.nombre}`;
   };
 
+  /* volver: si hay historia del browser, usa -1; sino va al catálogo */
+  const handleVolver = () => {
+    if (window.history.length > 1) navigate(-1);
+    else navigate("/catalogo");
+  };
+
   if (cargando) return (
     <div className="pantalla-carga"><div className="spinner-bcp"/><p>Cargando perfil...</p></div>
   );
@@ -83,10 +91,20 @@ function PerfilPublico() {
     <div className="pantalla-carga"><p>No se encontró el perfil.</p></div>
   );
 
+  /* áreas anteriores en BCP (excluye la actual) */
+  const areasAnteriores = (perfil.areasRotacion || [])
+    .filter((r) => r.area && r.area !== perfil.area);
+
   return (
     <div className="perfil-wrapper">
+      <Navbar />
 
       <div className="publico-container">
+
+        {/* BOTÓN VOLVER */}
+        <button className="pub-btn-volver" onClick={handleVolver}>
+          <FiArrowLeft size={15} style={{marginRight:6}}/>Volver
+        </button>
 
         {/* ══ HEADER ══ */}
         <div className="pub-header-card">
@@ -105,12 +123,20 @@ function PerfilPublico() {
                   <p className="pub-titulo">{perfil.titulo || "Sin título"}</p>
                   <div className="pub-badges">
                     {perfil.area && <span className="pub-badge-area">{perfil.area}</span>}
-                    {(perfil.ciudad||perfil.pais) && (
+                    {/* áreas anteriores como badges sutiles */}
+                    {areasAnteriores.map((r, i) => (
+                      <span key={i} className="pub-badge-area-anterior" title={`${r.desdeM} ${r.desdeA} – ${r.actualmente ? "Actualidad" : `${r.hastaM} ${r.hastaA}`}`}>
+                        {r.area}
+                      </span>
+                    ))}
+                    {(perfil.ciudad || perfil.pais) && (
                       <span className="pub-badge-loc">
-                        <FiMapPin size={11}/> {[perfil.ciudad,perfil.pais].filter(Boolean).join(", ")}
+                        <FiMapPin size={11}/> {[perfil.ciudad, perfil.pais].filter(Boolean).join(", ")}
                       </span>
                     )}
-                    {perfil.movilidad?.viajar && <span className="pub-badge-viaje">✈️ Disponible a viajar</span>}
+                    {perfil.movilidad?.viajar && (
+                      <span className="pub-badge-viaje">Disponible a viajar</span>
+                    )}
                   </div>
                   <div className="pub-links">
                     {perfil.linkedin && (
@@ -136,13 +162,13 @@ function PerfilPublico() {
                       <FiStar size={14}/> {favorito ? "Guardado" : "Guardar"}
                     </button>
                     <button className="pub-btn-contactar" onClick={contactar}>
-                      <FiMailContact size={14}/> Contactar
+                      <FiMail size={14}/> Contactar
                     </button>
                   </div>
                 )}
                 {!usuario && (
-                  <button className="pub-btn-lider" onClick={() => navigate("/auth-lider")}>
-                    🔑 Acceso líder
+                  <button className="pub-btn-lider" onClick={() => navigate("/auth")}>
+                    Acceso líder
                   </button>
                 )}
               </div>
@@ -157,15 +183,43 @@ function PerfilPublico() {
           <aside className="pub-sidebar">
 
             {/* Datos personales */}
-            <PubSeccion titulo="Datos personales">
+            <PubSeccion titulo="Datos personales" Icono={BsPersonVcard}>
               {perfil.email     && <PubDato Icon={FiMail}     val={perfil.email}/>}
               {perfil.telefono  && <PubDato Icon={FiPhone}    val={perfil.telefono}/>}
-              {(perfil.ciudad||perfil.pais) && (
-                <PubDato Icon={FiMapPin} val={[perfil.ciudad,perfil.distrito,perfil.pais].filter(Boolean).join(", ")}/>
+              {(perfil.ciudad || perfil.pais) && (
+                <PubDato Icon={FiMapPin} val={[perfil.ciudad, perfil.distrito, perfil.pais].filter(Boolean).join(", ")}/>
               )}
               {perfil.fechaNacimiento && <PubDato Icon={FiCalendar} val={perfil.fechaNacimiento}/>}
-              {perfil.genero && <PubDato Icon={()=><span style={{fontSize:13}}>👤</span>} val={perfil.genero}/>}
             </PubSeccion>
+
+            {/* Historial en BCP — área actual + anteriores */}
+            {(perfil.area || areasAnteriores.length > 0) && (
+              <PubSeccion titulo="Historial en BCP" Icono={HiOutlineOfficeBuilding}>
+                {/* área actual */}
+                {perfil.area && (
+                  <div className="pub-item pub-bcp-item pub-bcp-actual">
+                    <div className="pub-bcp-dot pub-bcp-dot-actual"/>
+                    <div>
+                      <p className="pub-item-t">{perfil.area}</p>
+                      <span className="pub-bcp-badge-actual">Área actual</span>
+                    </div>
+                  </div>
+                )}
+                {/* áreas anteriores */}
+                {areasAnteriores.map((r, i) => (
+                  <div key={i} className="pub-item pub-bcp-item">
+                    <div className="pub-bcp-dot"/>
+                    <div>
+                      <p className="pub-item-t">{r.area}</p>
+                      <p className="pub-item-d">
+                        {r.desdeM} {r.desdeA} – {r.actualmente ? "Actualidad" : `${r.hastaM} ${r.hastaA}`}
+                      </p>
+                      {r.logros && <p className="pub-item-desc">{r.logros}</p>}
+                    </div>
+                  </div>
+                ))}
+              </PubSeccion>
+            )}
 
             {/* Formación */}
             {perfil.educacion?.length > 0 && (
@@ -201,7 +255,10 @@ function PerfilPublico() {
 
             {/* Movilidad */}
             {perfil.movilidad && (
-              <PubSeccion titulo="Disponibilidad">
+              <PubSeccion titulo="Disponibilidad" Icono={null}>
+                {perfil.jornadaDisponible && (
+                  <p className="pub-jornada">{perfil.jornadaDisponible}</p>
+                )}
                 <div className="pub-movilidad">
                   <span className={`pub-mov ${perfil.movilidad.viajar?"pub-mov-si":"pub-mov-no"}`}>
                     {perfil.movilidad.viajar?"✓":"✗"} Viajar
@@ -222,7 +279,7 @@ function PerfilPublico() {
 
             {/* Resumen */}
             {(perfil.resumen || perfil.intereses) && (
-              <PubSeccion titulo="Perfil Profesional">
+              <PubSeccion titulo="Perfil Profesional" Icono={null}>
                 {perfil.resumen && <p className="pub-resumen">{perfil.resumen}</p>}
                 {perfil.intereses && <p className="pub-intereses"><strong>Intereses:</strong> {perfil.intereses}</p>}
               </PubSeccion>
@@ -266,7 +323,7 @@ function PerfilPublico() {
                       <div className="proyecto-meta">
                         {p.tecnologias && (
                           <div className="proyecto-tags">
-                            {p.tecnologias.split(",").map((t,j)=>(
+                            {p.tecnologias.split(",").map((t, j) => (
                               <span key={j} className="tag tag-tecnico tag-sm">{t.trim()}</span>
                             ))}
                           </div>
@@ -290,7 +347,7 @@ function PerfilPublico() {
                   <div className="skills-grupo">
                     <p className="pub-skills-cat pub-skills-tec">Habilidades Técnicas:</p>
                     <div className="skills-tags">
-                      {perfil.skills.map((s,i)=><span key={i} className="tag tag-tecnico">{s}</span>)}
+                      {perfil.skills.map((s, i) => <span key={i} className="tag tag-tecnico">{s}</span>)}
                     </div>
                   </div>
                 )}
@@ -298,7 +355,7 @@ function PerfilPublico() {
                   <div className="skills-grupo" style={{marginTop:12}}>
                     <p className="pub-skills-cat pub-skills-bla">Habilidades Blandas:</p>
                     <div className="skills-tags">
-                      {perfil.habilidadesBlandas.map((s,i)=><span key={i} className="tag tag-blando">{s}</span>)}
+                      {perfil.habilidadesBlandas.map((s, i) => <span key={i} className="tag tag-blando">{s}</span>)}
                     </div>
                   </div>
                 )}
@@ -312,11 +369,11 @@ function PerfilPublico() {
                   {perfil.cursos.map((c, i) => (
                     <div key={i} className="curso-item">
                       <div className="curso-icono">
-                        {c.tipo==="Certificado" ? <BsTrophy size={15}/> : <MdMenuBook size={15}/>}
+                        {c.tipo === "Certificado" ? <BsTrophy size={15}/> : <MdMenuBook size={15}/>}
                       </div>
                       <div className="curso-contenido">
                         <p className="curso-nombre">{c.nombre}</p>
-                        {c.institucion && <p className="curso-inst">{c.institucion}{c.anio?` · ${c.anio}`:""}</p>}
+                        {c.institucion && <p className="curso-inst">{c.institucion}{c.anio ? ` · ${c.anio}` : ""}</p>}
                         {c.tipo && <span className="tag-curso">{c.tipo}</span>}
                       </div>
                     </div>
@@ -325,9 +382,9 @@ function PerfilPublico() {
               </PubSeccion>
             )}
 
-            {/* Confidencial */}
             <div className="pub-confidencial">
-              🔒 Uso exclusivo para gestión interna del BCP
+              <FiLock size={12} style={{marginRight:5}}/>
+              Uso exclusivo para gestión interna del BCP
             </div>
           </div>
         </div>
@@ -336,7 +393,7 @@ function PerfilPublico() {
         {!usuario && (
           <div className="pub-banner-lider">
             <p>¿Eres líder BCP? Inicia sesión para guardar favoritos y contactar talento</p>
-            <button onClick={() => navigate("/auth-lider")}>Acceso para líderes</button>
+            <button onClick={() => navigate("/auth")}>Acceso para líderes</button>
           </div>
         )}
       </div>

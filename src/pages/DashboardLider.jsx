@@ -105,14 +105,6 @@ function DashboardLider() {
             </h3>
             <p className="text-muted mb-0">Panel exclusivo para líderes BCP</p>
           </div>
-          <div className="d-flex gap-2">
-            <button className="btn btn-outline-primary btn-sm" onClick={() => navigate("/catalogo")}>
-              Ver catálogo
-            </button>
-            <button className="btn btn-outline-danger btn-sm" onClick={async () => { await signOut(auth); navigate("/"); }}>
-              Cerrar sesión
-            </button>
-          </div>
         </div>
 
         {/* TABS */}

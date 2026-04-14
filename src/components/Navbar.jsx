@@ -81,12 +81,7 @@ function Navbar() {
           <>
             <Link to="/auth" className="nav-link">
               <FaUser className="icon-btn" />
-              Practicante
-            </Link>
-
-            <Link to="/auth-lider" className="nav-link nav-highlight">
-              <FaUsers className="icon-btn" />
-              Líder
+              Iniciar Sesion
             </Link>
           </>
         )}

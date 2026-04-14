@@ -113,7 +113,7 @@ function Filtros({ filtros, onChange, skillsDisponibles=[], esLider=false, abier
           )}
 
           {/* SKILLS */}
-          <Grupo titulo="Skills / Tags" icono="⚡" inicialAbierto={true} badge={filtros.skills.length}>
+          <Grupo titulo="Skills / Tags" inicialAbierto={true} badge={filtros.skills.length}>
             <p className="fg-hint">Filtra por tecnologías y herramientas</p>
             {skillsDisponibles.length > 0 ? (
               <div className="fg-chips-wrap">
@@ -125,7 +125,7 @@ function Filtros({ filtros, onChange, skillsDisponibles=[], esLider=false, abier
           </Grupo>
 
           {/* ÁREA BCP — diferenciado actual vs anterior */}
-          <Grupo titulo="Área de vacantes" icono="🏦" badge={cntArea}>
+          <Grupo titulo="Área de vacantes"  badge={cntArea}>
             {/* área ACTUAL */}
             <p className="fg-subgrupo-label">
               <span className="fg-subgrupo-dot fg-dot-actual"/>
@@ -165,7 +165,7 @@ function Filtros({ filtros, onChange, skillsDisponibles=[], esLider=false, abier
           </Grupo>
 
           {/* IDIOMAS */}
-          <Grupo titulo="Idiomas" icono="🌍" badge={filtros.idiomas.length}>
+          <Grupo titulo="Idiomas"  badge={filtros.idiomas.length}>
             <div className="fg-chips-wrap">
               {IDIOMAS_OPC.map(id=>(
                 <Chip key={id} label={id} activo={filtros.idiomas.includes(id)} onClick={()=>tgl("idiomas",id)}/>
@@ -174,7 +174,7 @@ function Filtros({ filtros, onChange, skillsDisponibles=[], esLider=false, abier
           </Grupo>
 
           {/* FORMACIÓN */}
-          <Grupo titulo="Formación" icono="🎓" badge={filtros.nivelEducacion.length}>
+          <Grupo titulo="Formación"  badge={filtros.nivelEducacion.length}>
             <div className="fg-chips-wrap">
               {NIVELES_EDU.map(n=>(
                 <Chip key={n} label={n} activo={filtros.nivelEducacion.includes(n)} onClick={()=>tgl("nivelEducacion",n)}/>
@@ -183,7 +183,7 @@ function Filtros({ filtros, onChange, skillsDisponibles=[], esLider=false, abier
           </Grupo>
 
           {/* PROYECTOS */}
-          <Grupo titulo="Proyectos" icono="🚀">
+          <Grupo titulo="Proyectos">
             <Toggle
               label="Con proyectos destacados"
               activo={filtros.soloConProyectos}
