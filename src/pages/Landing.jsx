@@ -1,4 +1,4 @@
-import Navbar from "../components/Navbar.jsx";
+
 import "../stylesheets/Landing.css";
 import { Link } from "react-router-dom";
 
