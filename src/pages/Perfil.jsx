@@ -120,7 +120,7 @@ function Perfil() {
 
   const eliminar = async (campo, idx) => {
     const res = await Swal.fire({ title:"¿Eliminar?", icon:"warning", showCancelButton:true,
-      confirmButtonColor:"#d33", cancelButtonColor:"#6c757d",
+      confirmButtonColor:"rgb(221, 99, 51)", cancelButtonColor:"#6c757d",
       confirmButtonText:"Sí, eliminar", cancelButtonText:"Cancelar" });
     if (!res.isConfirmed) return;
     const n = [...(perfil[campo]||[])]; n.splice(idx,1);
@@ -1209,5 +1209,6 @@ function ModalHab({ abierto, onCerrar, perfil, onGuardar }) {
     </Modal>
   );
 }
+
 
 export default Perfil;

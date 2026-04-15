@@ -26,18 +26,26 @@ function Landing() {
             herramientas de filtrado y análisis estratégico.
           </p>
 
-          <div className="hero-buttons">
-            <Link to="/auth" className="btn-primary">
-              Soy practicante
-            </Link>
 
-            <Link to="/catalogo" className="btn-secondary">
-              Soy líder
-            </Link>
-          </div>
+          <div className="hero-buttons">
+
+            <button
+              className="btn-secondary"
+              onClick={() => {
+                document.getElementById("info").scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Saber más
+            </button>
+        </div>
+
         </div>
       </div>
 
+      <section id="info">
+        <h2>Más información</h2>
+        <p>Aquí va el contenido...</p>
+      </section>
       {/* TALENTO */}
       <section className="section">
         <h2>Desarrollo de talento</h2>
