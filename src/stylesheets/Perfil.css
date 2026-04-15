@@ -73,7 +73,7 @@ body { font-family:var(--f); background:var(--g100); color:var(--g700); }
 .rotacion-chip-small {
   font-size:.72rem; font-weight:600; padding:3px 9px; border-radius:10px;
   background:var(--azul-s); color:var(--azul);
-  border:1px solid rgba(216, 85, 9, 0.479);
+  border:1px solid rgba(240, 94, 10, 0.479);
 }
 
 /* info items */
