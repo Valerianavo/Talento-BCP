@@ -70,8 +70,7 @@ const rangoExp = (m) => {
    NO "areasRotacion" (nombre incorrecto anterior).           */
 const FILTROS_INIT = {
   busqueda:         "",
-  areasActuales:    [],
-  areasAnteriores:  [],
+  areas:            [],   // busca en área actual Y en rotaciones anteriores
   skills:           [],
   idiomas:          [],
   nivelEducacion:   [],
@@ -80,7 +79,6 @@ const FILTROS_INIT = {
   rangosExp:        [],
   soloFavoritos:    false,
   soloConProyectos: false,
-  soloConRotaciones:false,
 };
 
 /* ══════════════════════════════════════════
@@ -160,18 +158,13 @@ function Catalogo() {
           if (!hay.includes(txt)) return false;
         }
 
-        /* área ACTUAL */
-        if (filtros.areasActuales.length > 0 && !filtros.areasActuales.includes(p.area))
-          return false;
-
-        /* área ANTERIOR ← campo correcto */
-        if (filtros.areasAnteriores.length > 0) {
-          const areasRot = (p.rotaciones || []).map((r) => r.area);
-          if (!filtros.areasAnteriores.some((a) => areasRot.includes(a))) return false;
+        /* áreas de experiencia — busca en área actual Y en rotaciones anteriores */
+        if (filtros.areas?.length > 0) {
+          const areaActual  = p.area || "";
+          const areasRotac  = (p.rotaciones || []).map((r) => r.area);
+          const todasAreas  = [areaActual, ...areasRotac].filter(Boolean);
+          if (!filtros.areas.some((a) => todasAreas.includes(a))) return false;
         }
-
-        /* solo con historial BCP ← campo correcto */
-        if (filtros.soloConRotaciones && !(p.rotaciones?.length > 0)) return false;
 
         /* skills — comparación case-insensitive para tolerar variantes de escritura */
         if (filtros.skills.length > 0) {
@@ -248,8 +241,7 @@ function Catalogo() {
   };
 
   const cantFiltros =
-    (filtros.areasActuales?.length  || 0) +
-    (filtros.areasAnteriores?.length|| 0) +
+    (filtros.areas?.length          || 0) +
     (filtros.skills?.length         || 0) +
     (filtros.idiomas?.length        || 0) +
     (filtros.nivelEducacion?.length || 0) +
@@ -257,8 +249,7 @@ function Catalogo() {
     (filtros.ubicaciones?.length    || 0) +
     (filtros.rangosExp?.length      || 0) +
     (filtros.soloFavoritos    ? 1 : 0) +
-    (filtros.soloConProyectos ? 1 : 0) +
-    (filtros.soloConRotaciones? 1 : 0);
+    (filtros.soloConProyectos ? 1 : 0);
 
   if (loading) return (
     <div className="pantalla-carga">
