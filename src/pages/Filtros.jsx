@@ -57,8 +57,7 @@ const toggle = (arr, val) =>
 ════════════════════════════════════════════════ */
 export const FILTROS_INIT = {
   busqueda:         "",
-  areasActuales:    [],
-  areasAnteriores:  [],
+  areas:            [],   // busca en área actual Y en rotaciones anteriores
   skills:           [],
   idiomas:          [],
   nivelEducacion:   [],
@@ -66,7 +65,6 @@ export const FILTROS_INIT = {
   rangosExp:        [],
   soloFavoritos:    false,
   soloConProyectos: false,
-  soloConRotaciones:false,
 };
 
 /* ════════════════════════════════════════════════
@@ -259,17 +257,15 @@ function Filtros({
   const tgl = (campo, val)   => onChange({ ...filtros, [campo]: toggle(filtros[campo] || [], val) });
 
   /* contadores */
-  const cntArea = (filtros.areasActuales?.length || 0) + (filtros.areasAnteriores?.length || 0);
   const total =
-    cntArea +
+    (filtros.areas?.length          || 0) +
     (filtros.skills?.length         || 0) +
     (filtros.idiomas?.length        || 0) +
     (filtros.nivelEducacion?.length || 0) +
     (filtros.ubicaciones?.length    || 0) +
     (filtros.rangosExp?.length      || 0) +
     (filtros.soloFavoritos       ? 1 : 0) +
-    (filtros.soloConProyectos    ? 1 : 0) +
-    (filtros.soloConRotaciones   ? 1 : 0);
+    (filtros.soloConProyectos    ? 1 : 0);
 
   const limpiar = () => onChange({ ...FILTROS_INIT, busqueda: filtros.busqueda });
 
@@ -376,50 +372,20 @@ function Filtros({
             />
           </Grupo>
 
-          {/* ── ÁREA DEL PRACTICANTE ── */}
-          <Grupo titulo="Área del practicante" badge={cntArea}>
-
-            <div className="fg-subgrupo">
-              <div className="fg-subgrupo-header">
-                <span className="fg-subgrupo-dot fg-dot-actual" />
-                <span className="fg-subgrupo-titulo">Área actual</span>
-              </div>
-              <p className="fg-hint">Área en la que trabaja actualmente</p>
-              <div className="fg-chips-wrap">
-                {AREAS_BCP.map((a) => (
-                  <Chip
-                    key={`act-${a}`}
-                    label={a}
-                    activo={(filtros.areasActuales || []).includes(a)}
-                    onClick={() => tgl("areasActuales", a)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="fg-subgrupo" style={{ marginTop: 14 }}>
-              <div className="fg-subgrupo-header">
-                <span className="fg-subgrupo-dot fg-dot-anterior" />
-                <span className="fg-subgrupo-titulo">Áreas anteriores en BCP</span>
-              </div>
-              <p className="fg-hint">Áreas por las que rotó anteriormente</p>
-              <div className="fg-chips-wrap">
-                {AREAS_BCP.map((a) => (
-                  <Chip
-                    key={`ant-${a}`}
-                    label={a}
-                    activo={(filtros.areasAnteriores || []).includes(a)}
-                    onClick={() => tgl("areasAnteriores", a)}
-                  />
-                ))}
-              </div>
-              <div style={{ marginTop: 10 }}>
-                <ToggleRow
-                  label="Solo con historial interno BCP"
-                  activo={!!filtros.soloConRotaciones}
-                  onChange={() => upd("soloConRotaciones", !filtros.soloConRotaciones)}
+          {/* ── ÁREAS DE EXPERIENCIA — actual + anteriores unificadas ── */}
+          <Grupo titulo="Áreas de experiencia" badge={filtros.areas?.length || 0}>
+            <p className="fg-hint">
+              Muestra practicantes que tengan esa área como actual <strong>o</strong> como rotación anterior en BCP.
+            </p>
+            <div className="fg-chips-wrap">
+              {AREAS_BCP.map((a) => (
+                <Chip
+                  key={a}
+                  label={a}
+                  activo={(filtros.areas || []).includes(a)}
+                  onClick={() => tgl("areas", a)}
                 />
-              </div>
+              ))}
             </div>
           </Grupo>
 
