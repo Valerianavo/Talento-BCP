@@ -44,8 +44,6 @@ export const UBICACIONES = [
   "Santa Anita","Surco","Trujillo","Villa El Salvador",
 ].sort();
 
-export const GENEROS = ["Hombre","Mujer","Prefiero no decir","Otro"];
-
 export const RANGOS_EXP = [
   "Sin experiencia","1–3 meses","4–6 meses","6–12 meses","+12 meses",
 ];
@@ -64,7 +62,6 @@ export const FILTROS_INIT = {
   skills:           [],
   idiomas:          [],
   nivelEducacion:   [],
-  generos:          [],
   ubicaciones:      [],
   rangosExp:        [],
   soloFavoritos:    false,
@@ -268,7 +265,6 @@ function Filtros({
     (filtros.skills?.length         || 0) +
     (filtros.idiomas?.length        || 0) +
     (filtros.nivelEducacion?.length || 0) +
-    (filtros.generos?.length        || 0) +
     (filtros.ubicaciones?.length    || 0) +
     (filtros.rangosExp?.length      || 0) +
     (filtros.soloFavoritos       ? 1 : 0) +
@@ -462,20 +458,6 @@ function Filtros({
                   label={n}
                   activo={(filtros.nivelEducacion || []).includes(n)}
                   onClick={() => tgl("nivelEducacion", n)}
-                />
-              ))}
-            </div>
-          </Grupo>
-
-          {/* ── GÉNERO ── */}
-          <Grupo titulo="Género" badge={filtros.generos?.length || 0}>
-            <div className="fg-chips-wrap">
-              {GENEROS.map((g) => (
-                <Chip
-                  key={g}
-                  label={g}
-                  activo={(filtros.generos || []).includes(g)}
-                  onClick={() => tgl("generos", g)}
                 />
               ))}
             </div>

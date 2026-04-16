@@ -63,7 +63,6 @@ function Perfil() {
   /* modales */
   const [mHeader,    setMHeader]    = useState(false);
   const [mDatos,     setMDatos]     = useState(false);
-  const [mMovilidad, setMMovilidad] = useState(false);
   const [mExp,       setMExp]       = useState(false);
   const [mProy,      setMProy]      = useState(false);
   const [mEdu,       setMEdu]       = useState(false);
@@ -186,16 +185,6 @@ function Perfil() {
                 </div>
               </>
             )}
-          </div>
-
-          <div className="sidebar-card">
-            <div className="sidebar-card-header">
-              <h6 className="sidebar-titulo">MOVILIDAD</h6>
-              <button className="btn-icono" onClick={()=>setMMovilidad(true)}><FiEdit2 size={13}/></button>
-            </div>
-            <MovBadge label="Disponible a viajar" val={perfil.movilidad?.viajar}/>
-            <MovBadge label="Reubicación"         val={perfil.movilidad?.reubicacion}/>
-            <MovBadge label="Vehículo propio"     val={perfil.movilidad?.vehiculo}/>
           </div>
 
           <div className="sidebar-card tips-card">
@@ -402,7 +391,6 @@ function Perfil() {
       {/* ══ MODALES ══ */}
       <ModalHeader    abierto={mHeader}    onCerrar={()=>setMHeader(false)}    perfil={perfil} onGuardar={guardar}/>
       <ModalDatos     abierto={mDatos}     onCerrar={()=>setMDatos(false)}     perfil={perfil} onGuardar={guardar}/>
-      <ModalMovilidad abierto={mMovilidad} onCerrar={()=>setMMovilidad(false)} perfil={perfil} onGuardar={guardar}/>
       <ModalExp       abierto={mExp}       onCerrar={()=>setMExp(false)}       perfil={perfil} onGuardar={guardar}/>
       <ModalProy      abierto={mProy}      onCerrar={()=>setMProy(false)}      perfil={perfil} onGuardar={guardar}/>
       <ModalEdu       abierto={mEdu}       onCerrar={()=>setMEdu(false)}       perfil={perfil} onGuardar={guardar}/>
@@ -485,14 +473,7 @@ function SideLink({ Icon, label, href }) {
     </a>
   );
 }
-function MovBadge({ label, val }) {
-  return (
-    <div className="movilidad-item">
-      <span>{label}</span>
-      <span className={`movilidad-badge ${val?"badge-si":"badge-no"}`}>{val?"Sí":"No"}</span>
-    </div>
-  );
-}
+
 function SeccionCard({ titulo, Icono, onEditar, onAnadir, children }) {
   return (
     <section className="card-perfil seccion-card">
@@ -739,23 +720,6 @@ function ModalDatos({ abierto, onCerrar, perfil, onGuardar }) {
   );
 }
 
-/* ══ MODAL MOVILIDAD ══ */
-function ModalMovilidad({ abierto, onCerrar, perfil, onGuardar }) {
-  const [viajar,  setViajar]  = useState(perfil?.movilidad?.viajar||false);
-  const [reubic,  setReubic]  = useState(perfil?.movilidad?.reubicacion||false);
-  const [vehiculo,setVehiculo]= useState(perfil?.movilidad?.vehiculo||false);
-  useEffect(()=>{ setViajar(perfil?.movilidad?.viajar||false);setReubic(perfil?.movilidad?.reubicacion||false);setVehiculo(perfil?.movilidad?.vehiculo||false); },[perfil]);
-  return (
-    <Modal abierto={abierto} onCerrar={onCerrar} titulo="Editar movilidad">
-      <div className="movilidad-opciones">
-        <Toggle label="Disponible para viajar" desc="Puedo desplazarme a otras ciudades" val={viajar} onChange={setViajar}/>
-        <Toggle label="Disponible para reubicación" desc="Dispuesto/a a cambiar de ciudad" val={reubic} onChange={setReubic}/>
-        <Toggle label="Vehículo propio" desc="Cuento con vehículo para movilizarme" val={vehiculo} onChange={setVehiculo}/>
-      </div>
-      <MFooter onCerrar={onCerrar} onGuardar={async()=>{ await onGuardar({movilidad:{viajar,reubicacion:reubic,vehiculo}}); onCerrar(); }}/>
-    </Modal>
-  );
-}
 function Toggle({ label, desc, val, onChange }) {
   return (
     <div className="toggle-opcion" onClick={()=>onChange(!val)}>
