@@ -26,9 +26,14 @@ function Navbar() {
         <FaHome className="icon-btn" /> Inicio
       </Link>
 
-      <Link to="/catalogo" className="nav-link" onClick={cerrar}>
+      {user && (
+        <Link to="/catalogo" className="nav-link" onClick={cerrar}>
+          <FaUsers className="icon-btn" /> Buscar Talento
+        </Link>
+      )}
+      {/* <Link to="/catalogo" className="nav-link" onClick={cerrar}>
         <FaUsers className="icon-btn" /> Buscar Talento
-      </Link>
+      </Link> */}
 
       {!cargando && (
         <>

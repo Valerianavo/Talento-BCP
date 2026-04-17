@@ -102,7 +102,7 @@
   border: none;
   cursor: pointer;
   padding: 4px;
-  z-index: 102;
+  z-index: 500;
 }
 
 .nav-hamburger span {
@@ -114,9 +114,16 @@
   transition: transform 0.25s, opacity 0.25s;
 }
 
+
 .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
 .nav-hamburger.open span:nth-child(2) { opacity: 0; }
 .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.nav-hamburger.open {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+}
 
 /* ===== MOBILE MENU ===== */
 .nav-mobile-overlay {
