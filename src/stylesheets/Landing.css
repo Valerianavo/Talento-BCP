@@ -5,91 +5,208 @@ body {
   color: #002abd;
 }
 
+/* ===== HERO ===== */
 .landing-container {
   height: 90vh;
-  background: url("https://images.unsplash.com/photo-1556761175-b413da4baf72")
-    center/cover no-repeat;
+  background: url("/src/images/landingbcp.png") center/cover no-repeat;
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 80px;
+  overflow: hidden;
 }
 
-/* CAPA OSCURA */
+/* Overlay desktop (oscurece izquierda) */
 .landing-container::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: rgba(2, 23, 99, 0.384); /* azul BCP con opacidad */
+
 }
 
 /* CONTENIDO ENCIMA */
 .landing-container > * {
   position: relative;
   z-index: 1;
-  color: white;
 }
 
-/* OVERLAY OSCURO */
+/* ===== TEXTO HERO ===== */
 .overlay-hero {
-  background: rgba(3, 0, 0, 0.74); /* 👈 oscurece la imagen */
-  color: #ffffff;
-  padding: 50px;
-  border-radius: 12px;
-  text-align: center;
-  max-width: 650px;
+  padding: 60px 40px;
+  border-radius: 16px;
+  text-align: left;
+  max-width: 550px;
+  color: #002abd;
 }
 
-/* TEXTO */
+/* TÍTULO */
 .overlay-hero h1 {
-  font-size: 38px;
-  margin-bottom: 12px;
+  font-size: 44px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+
+  background: linear-gradient(90deg, #ff7700, #002abd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
+/* DESCRIPCIÓN */
 .overlay-hero p {
-  font-size: 17px;
-  opacity: 0.9;
+  font-size: 18px;
+  opacity: 0.95;
 }
 
 /* ===== BOTONES ===== */
-.hero-buttons {
-  margin-top: 25px;
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-.btn-primary {
-  background: #002abd;
-  color: white;
-  padding: 12px 22px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-}
-
+.btn-primary,
 .btn-secondary {
-  background: #ff5000;
+  background-color: #FF7800;
   color: white;
-  padding: 12px 22px;
-  border-radius: 8px;
+  padding: 10px 20px;
+  border-radius: 25px;
   text-decoration: none;
   font-weight: 600;
+  border: none;
+  transition: all 0.2s ease;
 }
 
 .btn-primary:hover,
 .btn-secondary:hover {
-  opacity: 0.9;
+  background-color: #e56b00;
+  transform: translateY(-3px);
+}
+
+
+
+
+
+
+
+/* ========================= */
+/* 📱 RESPONSIVE (TABLET/MOBILE) */
+/* ========================= */
+@media (max-width: 768px) {
+
+  .landing-container {
+    justify-content: center; /* 👈 centra todo */
+    padding-left: 0;
+    text-align: center;
+  }
+
+  /* Difuminado general + oscurecido */
+  .landing-container::before {
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(6px); /* 🔥 difuminado */
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  /* Card vidriosa */
+  .overlay-hero {
+    max-width: 90%;
+    padding: 40px 25px;
+    text-align: center;
+
+    background: rgba(255, 255, 255, 0.08); /* vidrio */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+  }
+
+  /* Título más pequeño */
+  .overlay-hero h1 {
+    font-size: 32px;
+  }
+
+  /* Texto más compacto */
+  .overlay-hero p {
+    font-size: 16px;
+  }
+
+  /* Botones centrados */
+  .hero-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+
+/* ===== SECCIÓN INFO ===== */
+#info {
+  background-color: #f4f6fb;
+  padding: 50px 0;
+  text-align: center;
+}
+
+#info h2 {
+  color: #002abd;
+  font-weight: 700;
+  margin-bottom: 15px;
+}
+
+#info p {
+  color: #444;
+  font-size: 1.05rem;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+#info h2::after {
+  content: "";
+  display: block;
+  width: 50px;
+  height: 4px;
+  background-color: #FF7800;
+  margin: 10px auto 0;
+  border-radius: 2px;
+}
+
+.titulo-talento {
+  color: #FF7800;
+  position: relative;
+}
+
+.titulo-talento::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #002A8D, #FF7800);
+  margin: 8px auto 0;
 }
 
 /* ===== SECCIONES ===== */
 .section {
-  padding: 70px 20px;
+  padding: 20px 5px;
   text-align: center;
+  color: #002abd;
 }
 
 .section.alt {
   background: #f4f6fb;
+}
+
+
+.card-title {
+  color: #002A8D;
+  transition: color 0.25s ease;
+}
+
+
+.info-card:hover .card-title {
+  color: #FF7800;
+}
+.info-card:hover::before {
+  opacity: 1;
+}
+
+
+* {
+  transition: all 0.2s ease-in-out;
 }
 
 /* ===== CARDS ===== */
@@ -104,27 +221,215 @@ body {
 .info-card {
   background: white;
   padding: 25px;
-  border-radius: 14px;
+  border-radius: 16px;
   width: 260px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  transition: 0.25s;
+  box-shadow: 0 10px 25px rgba(0, 42, 189, 0.08);
+  transition: all 0.3s ease;
+  border-top: 4px solid transparent;
+  position: relative;
+  overflow: hidden;
 }
 
 .info-card:hover {
   transform: translateY(-6px);
+  border-top: 4px solid #FF7800; /* naranja BCP */
 }
 
+/* efecto glow sutil */
+.info-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent, rgba(255,120,0,0.1), transparent);
+  opacity: 0;
+  transition: 0.3s;
+}
+
+/* Subtítulo con degradado */
+.subtitulo-lider {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 10px;
+  margin-bottom: 20px;
+
+  background: linear-gradient(90deg, #FF7800, #002abd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+
+  position: relative;
+  display: inline-block;
+}
+
+/* Rayita debajo */
+.subtitulo-lider::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, #002A8D, #FF7800);
+  margin: 8px auto 0;
+  border-radius: 2px;
+}
 /* ===== ICONOS ===== */
 .icon {
   font-size: 28px;
   color: #002abd;
   margin-bottom: 12px;
+  transition: 0.25s;
+}
+
+.info-card:hover .icon {
+  color: #FF7800; /* cambia a naranja al hover */
+}
+
+/* opcional: diferenciar un poco */
+.section:last-of-type {
+  margin-bottom: 40px;
+}
+
+.titulo-beneficios {
+  font-weight: 700;
+  font-size: 2rem;
+
+  background: linear-gradient(90deg, #002A8D, #FF7800);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+
+  position: relative;
+  display: inline-block;
+}
+
+/* Rayita debajo */
+.titulo-beneficios::after {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #002A8D, #FF7800);
+  margin: 8px auto 0;
+  border-radius: 2px;
 }
 
 /* ===== FOOTER ===== */
 .footer {
-  text-align: center;
-  padding: 20px;
-  background: #002abd;
+  background: linear-gradient(90deg, #002A8D, #001F6B); /* azul BCP */
   color: white;
+  text-align: center;
+  padding: 20px 10px;
+  margin-top: 50px;
+}
+
+/* Texto */
+.footer-text {
+  margin: 0;
+  font-size: 0.95rem;
+  opacity: 0.9;
+}
+
+/* Línea superior decorativa */
+.footer::before {
+  content: "";
+  display: block;
+  height: 4px;
+  width: 100%;
+  background: #FF7800; /* naranja BCP */
+  margin-bottom: 10px;
+}
+
+.landing-container::before {
+  background: linear-gradient(
+    rgba(2, 23, 99, 0.75),
+    rgba(2, 23, 99, 0.85)
+  );
+}
+
+
+@media (max-width: 768px) {
+
+  .landing-container {
+    height: auto; 
+    
+    
+    border-radius: 20px; 
+    overflow: hidden; 
+
+    background-image: 
+
+      url("/src/images/otraminired.png");
+
+    background-size: cover;
+    background-position: 75% center;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    padding: 30px 20px;
+  }
+
+  /* Quitamos overlays extras */
+  .landing-container::before {
+    display: none;
+  }
+
+  /* Texto encima alineado a la izquierda */
+  .overlay-hero {
+    max-width: 70%;
+    padding: 0;
+    background: none;
+    text-align: left;
+
+    backdrop-filter: none;
+    border: none;
+
+  }
+
+
+
+  .overlay-hero h1 {
+    font-size: 26px;
+    font-weight: 600;
+
+    background: linear-gradient(90deg, #FF7800, #002ABD); 
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+
+    text-shadow: 0 3px 10px rgba(0,0,0,0.3);
+  }
+
+
+
+  .overlay-hero p {
+    font-size: 14px;
+    color: #002abd;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  
+  }
+
+  .hero-buttons {
+    justify-content: flex-start;
+    gap: 50px;
+  }
+  /* por defecto */
+  .mobile {
+    display: none;
+  }
+
+  .overlay-hero p {
+    font-size: 0; 
+  }
+
+  .overlay-hero p::after {
+    content: "Gestiona y potencia el talento";
+    font-size: 14px;
+    display: block;
+  }
+
+
 }

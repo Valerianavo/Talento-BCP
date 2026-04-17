@@ -164,7 +164,6 @@ body { font-family:var(--f); background:var(--g100); color:var(--g700); }
 .btn-anadir:hover { background:var(--azul); color:var(--blanco); }
 .btn-editar { background:var(--g100); color:var(--g700); }
 .btn-editar:hover { background:var(--g200); }
-.seccion-body { }
 .texto-vacio  { font-size:.87rem; color:var(--g500); font-style:italic; }
 
 /* ═══════════════════════════════════════════
@@ -207,7 +206,7 @@ body { font-family:var(--f); background:var(--g100); color:var(--g700); }
 
 
 .rot-contenido { flex:1; padding:2px 0 16px 8px; }
-.rot-actual    { }
+
 .rot-badge-actual {
   display:inline-block; font-size:.7rem; font-weight:700;
   background:var(--azul); color:#fff;
@@ -533,7 +532,7 @@ body { font-family:var(--f); background:var(--g100); color:var(--g700); }
 .hab-categorias::-webkit-scrollbar-track { background: #f8fafc; }
 .hab-categorias::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
-.hab-categoria {}
+
 .hab-cat-titulo {
   font-size: 11px;
   font-weight: 800;
