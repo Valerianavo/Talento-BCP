@@ -837,23 +837,108 @@ function ModalEdu({ abierto, onCerrar, perfil, onGuardar, modoEdicion=false, ite
 
 /* ══ MODAL IDIOMAS ══ */
 function ModalIdiomas({ abierto, onCerrar, perfil, onGuardar }) {
-  const [lista,setLista]=useState(perfil?.idiomas||[]);const [nuevoId,setNuevoId]=useState("");const [nuevoNv,setNuevoNv]=useState("");
-  useEffect(()=>setLista(perfil?.idiomas||[]),[perfil]);
-  const agregar=()=>{
-    if(!nuevoId||!nuevoNv){Swal.fire({icon:"warning",title:"Selecciona idioma y nivel",confirmButtonColor:"#003DA5"});return;}
-    if(lista.find(l=>l.idioma===nuevoId)){Swal.fire({icon:"warning",title:"Ese idioma ya está añadido",confirmButtonColor:"#003DA5"});return;}
-    setLista([...lista,{idioma:nuevoId,nivel:nuevoNv}]);setNuevoId("");setNuevoNv("");
+  const [lista,    setLista]    = useState(perfil?.idiomas || []);
+  const [nuevoId,  setNuevoId]  = useState("");
+  const [nuevoNv,  setNuevoNv]  = useState("");
+
+  /* Sincronizar cuando cambia el perfil o se abre el modal */
+  useEffect(() => {
+    setLista(perfil?.idiomas || []);
+    setNuevoId("");
+    setNuevoNv("");
+  }, [perfil, abierto]);
+
+  /* Agregar a la lista local (sin guardar aún) */
+  const agregar = () => {
+    if (!nuevoId) {
+      Swal.fire({ icon:"warning", title:"Selecciona un idioma", confirmButtonColor:"#003DA5" });
+      return;
+    }
+    if (!nuevoNv) {
+      Swal.fire({ icon:"warning", title:"Selecciona el nivel", confirmButtonColor:"#003DA5" });
+      return;
+    }
+    if (lista.find(l => l.idioma === nuevoId)) {
+      Swal.fire({ icon:"warning", title:"Ese idioma ya está en tu lista", confirmButtonColor:"#003DA5" });
+      return;
+    }
+    setLista(prev => [...prev, { idioma: nuevoId, nivel: nuevoNv }]);
+    setNuevoId("");
+    setNuevoNv("");
   };
-  const eliminar=(i)=>setLista(lista.filter((_,j)=>j!==i));
-  const cambiarNivel=(i,v)=>{ const n=[...lista];n[i]={...n[i],nivel:v};setLista(n); };
+
+  /* Eliminar de la lista local */
+  const eliminar = (i) => setLista(prev => prev.filter((_, j) => j !== i));
+
+  /* Cambiar nivel de un idioma ya en la lista */
+  const cambiarNivel = (i, nuevoNivel) => {
+    setLista(prev => prev.map((item, j) => j === i ? { ...item, nivel: nuevoNivel } : item));
+  };
+
+  /* Guardar todo a Firestore */
+  const guardar = async () => {
+    await onGuardar({ idiomas: lista });
+    onCerrar();
+  };
+
   return (
     <Modal abierto={abierto} onCerrar={onCerrar} titulo="Idiomas">
-      {lista.length>0&&(<div className="idiomas-editar-lista">{lista.map((l,i)=>(<div key={i} className="idioma-editar-row"><span className="idioma-nombre">{l.idioma}</span><select className="form-input idioma-nivel-select" value={l.nivel} onChange={e=>cambiarNivel(i,e.target.value)}>{NIVELES_IDIOMA.map(n=><option key={n}>{n}</option>)}</select><button className="btn-eliminar" onClick={()=>eliminar(i)}><FiTrash2 size={12}/></button></div>))}</div>)}
-      <p className="form-sublabel" style={{marginTop:lista.length>0?16:0}}>Agregar idioma</p>
-      <FRow><FG label="Idioma"><Sel value={nuevoId} onChange={e=>setNuevoId(e.target.value)}><option value="">Selecciona</option>{IDIOMAS_LISTA.map(id=><option key={id}>{id}</option>)}</Sel></FG>
-      <FG label="Nivel"><Sel value={nuevoNv} onChange={e=>setNuevoNv(e.target.value)}><option value="">Nivel</option>{NIVELES_IDIOMA.map(n=><option key={n}>{n}</option>)}</Sel></FG></FRow>
-      <button className="btn-agregar-row" onClick={agregar}><FiPlus size={12}/> Agregar idioma</button>
-      <MFooter onCerrar={onCerrar} onGuardar={async()=>{ await onGuardar({idiomas:lista});onCerrar(); }}/>
+
+      {/* Lista de idiomas ya añadidos */}
+      {lista.length > 0 && (
+        <div className="idiomas-editar-lista">
+          {lista.map((l, i) => (
+            <div key={i} className="idioma-editar-row">
+              <span className="idioma-nombre">{l.idioma}</span>
+              <select
+                className="form-input idioma-nivel-select"
+                value={l.nivel}
+                onChange={e => cambiarNivel(i, e.target.value)}
+              >
+                {NIVELES_IDIOMA.map(n => <option key={n}>{n}</option>)}
+              </select>
+              <button className="btn-eliminar" onClick={() => eliminar(i)}>
+                <FiTrash2 size={12}/>
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Añadir nuevo idioma */}
+      <p className="form-sublabel" style={{ marginTop: lista.length > 0 ? 16 : 0 }}>
+        Agregar idioma
+      </p>
+      <div className="form-fila">
+        <div className="form-grupo">
+          <label className="form-label">Idioma</label>
+          <select
+            className="form-input"
+            value={nuevoId}
+            onChange={e => setNuevoId(e.target.value)}
+          >
+            <option value="">Selecciona</option>
+            {IDIOMAS_LISTA.map(id => <option key={id}>{id}</option>)}
+          </select>
+        </div>
+        <div className="form-grupo">
+          <label className="form-label">Nivel</label>
+          <select
+            className="form-input"
+            value={nuevoNv}
+            onChange={e => setNuevoNv(e.target.value)}
+          >
+            <option value="">Nivel</option>
+            {NIVELES_IDIOMA.map(n => <option key={n}>{n}</option>)}
+          </select>
+        </div>
+      </div>
+
+      <button className="btn-agregar-row" onClick={agregar}>
+        <FiPlus size={12}/> Agregar idioma
+      </button>
+
+      <MFooter onCerrar={onCerrar} onGuardar={guardar} />
     </Modal>
   );
 }
