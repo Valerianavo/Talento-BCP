@@ -12,7 +12,7 @@ import "../stylesheets/Catalogo.css";
 
 import {
   FiMapPin, FiStar, FiMail, FiPhone, FiArrowLeft,
-  FiExternalLink, FiX,
+  FiExternalLink, FiX, FiSliders,
 } from "react-icons/fi";
 import {
   MdSchool, MdRocketLaunch, MdBolt, MdMenuBook,
@@ -222,6 +222,14 @@ function Catalogo() {
             </button>
           )}
         </div>
+        <button
+          className={`cat-btn-filtrar ${panelAbierto ? "cat-btn-filtrar-abierto" : ""} ${cantFiltros > 0 ? "cat-btn-filtrar-on" : ""}`}
+          onClick={() => setPanelAbierto((v) => !v)}
+        >
+          <FiSliders size={15}/>
+          Filtrar
+          {cantFiltros > 0 && <span className="cat-filtro-count">{cantFiltros}</span>}
+        </button>
       </div>
 
       {/* BODY */}

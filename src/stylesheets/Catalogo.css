@@ -155,6 +155,7 @@ body { font-family:var(--f); background:var(--g100); color:var(--g700); }
   .filtros-x-btn     { display:none; }
   .filtros-footer-mobile { display:none; }
   .filtros-panel-open { right:auto !important; }
+  .cat-btn-filtrar   { display:none; }
 }
 
 .filtros-header {
@@ -494,8 +495,6 @@ body { font-family:var(--f); background:var(--g100); color:var(--g700); }
 }
 @media(max-width:900px) {
   .cat-body { flex-direction:column; }
-  .filtros-panel { width:100%; position:static; max-height:none; display:none; }
-  .filtros-panel-open { display:flex !important; }
   .cat-topbar { padding:10px 14px; gap:10px; }
 }
 @media(max-width:600px) {
