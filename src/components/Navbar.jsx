@@ -62,7 +62,7 @@ function Navbar() {
           ) : (
             <Link to="/auth" className="nav-link" onClick={cerrar}>
               <FaUser className="icon-btn" />
-              <span>Iniciar sesión</span>
+              <span>Iniciar sesión o Registrarse</span>
             </Link>
           )}
         </>
