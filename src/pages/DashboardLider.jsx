@@ -1,351 +1,390 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { db, auth } from "../firebase/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  getDoc,
-  updateDoc,
-  arrayRemove,
+  collection, query, where, getDocs,
+  doc, getDoc, updateDoc, arrayRemove,
+  addDoc, serverTimestamp, deleteDoc,
 } from "firebase/firestore";
+import { useRol } from "../hooks/useRol";
 import Navbar from "../components/Navbar.jsx";
-import "../stylesheets/Catalogo.css";
+import "../stylesheets/DashboardLider.css";
 
+import {
+  FiStar, FiMail, FiMapPin, FiUsers,
+  FiTrendingUp, FiLogOut, FiBriefcase,
+  FiPlusCircle, FiTrash2, FiEdit2, FiEye,
+} from "react-icons/fi";
+import { MdBolt } from "react-icons/md";
+import { HiOutlineBriefcase, HiOutlineOfficeBuilding } from "react-icons/hi";
+import { RiTeamLine } from "react-icons/ri";
+import { IoSearchOutline } from "react-icons/io5";
+
+/* ── helpers ── */
+const calcComp = (p) => {
+  const c = [
+    p.titulo, p.resumen, p.area, p.intereses,
+    p.experiencia?.length > 0, p.educacion?.length > 0,
+    p.idiomas?.length > 0, p.cursos?.length > 0,
+  ];
+  return Math.round(c.filter(Boolean).length / c.length * 100);
+};
+
+/* ── Gráfico barras horizontales ── */
+function HBarChart({ data, color = "#003DA5" }) {
+  if (!data.length) return <p className="dl-empty-txt">Sin datos aún</p>;
+  const max = Math.max(...data.map((d) => d.value), 1);
+  return (
+    <div className="dl-hbar-list">
+      {data.map((d, i) => (
+        <div key={i} className="dl-hbar-row">
+          <span className="dl-hbar-label" title={d.label}>{d.label}</span>
+          <div className="dl-hbar-track">
+            <div className="dl-hbar-fill" style={{ width:`${(d.value/max)*100}%`, background:color }}/>
+          </div>
+          <span className="dl-hbar-val">{d.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Dona SVG ── */
+function DonutChart({ segments, size = 120 }) {
+  const r = 42; const cx = size/2; const cy = size/2;
+  const circ = 2*Math.PI*r;
+  const total = segments.reduce((s,d) => s+d.value, 0) || 1;
+  let offset = 0;
+  const arcs = segments.map((seg) => {
+    const dash = (seg.value/total)*circ;
+    const arc  = { ...seg, dash, offset: circ-offset };
+    offset += dash;
+    return arc;
+  });
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#f3f4f6" strokeWidth={18}/>
+      {arcs.map((arc,i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={arc.color} strokeWidth={18}
+          strokeDasharray={`${arc.dash} ${circ}`} strokeDashoffset={arc.offset}
+          style={{transform:"rotate(-90deg)", transformOrigin:"center"}}/>
+      ))}
+      <text x={cx} y={cy+6} textAnchor="middle" fontSize={20} fontWeight="800" fill="#111827">{total}</text>
+    </svg>
+  );
+}
+
+/* ── Sparkline ── */
+function SparkLine({ values, color="#003DA5", width=100, height=40 }) {
+  if (values.length < 2) return null;
+  const max=Math.max(...values,1); const min=Math.min(...values); const rng=max-min||1;
+  const pts=values.map((v,i) => {
+    const x=(i/(values.length-1))*width;
+    const y=height-((v-min)/rng)*(height-8)-4;
+    return `${x},${y}`;
+  });
+  const area=`M${pts[0]} ${pts.slice(1).map(p=>`L${p}`).join(" ")} L${width},${height} L0,${height} Z`;
+  const line=`M${pts[0]} ${pts.slice(1).map(p=>`L${p}`).join(" ")}`;
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{overflow:"visible"}}>
+      <path d={area} fill={color} fillOpacity={0.12}/>
+      <path d={line} fill="none" stroke={color} strokeWidth={2} strokeLinejoin="round"/>
+      {values.map((v,i) => {
+        const x=(i/(values.length-1))*width;
+        const y=height-((v-min)/rng)*(height-8)-4;
+        return <circle key={i} cx={x} cy={y} r={2.5} fill={color}/>;
+      })}
+    </svg>
+  );
+}
+
+const AREAS_BCP = [
+  "Analítica & Tecnología","Finanzas & Control","Gestión & Operaciones",
+  "Comunicación & Relación","Riesgos & Cumplimiento","Marketing & Experiencia Cliente",
+];
+
+/* ════════════════════════════════════════════
+   DASHBOARD LÍDER
+   Acceso: rol === "lider" (verificado por Firestore, no por correo)
+════════════════════════════════════════════ */
 function DashboardLider() {
   const navigate = useNavigate();
 
-  const [usuario,      setUsuario]      = useState(null);
+  /* ── Verificación de rol por Firestore ── */
+  const { user, rol, docId: liderDocId, cargando: cargandoRol } = useRol();
+
   const [liderData,    setLiderData]    = useState(null);
-  const [liderDocId,   setLiderDocId]   = useState(null);
   const [practicantes, setPracticantes] = useState([]);
   const [favoritos,    setFavoritos]    = useState([]);
   const [cargando,     setCargando]     = useState(true);
   const [tabActiva,    setTabActiva]    = useState("metricas");
+  const [busqFav,      setBusqFav]      = useState("");
+  const [modalVacante, setModalVacante] = useState(false);
+  const [vacanteEdit,  setVacanteEdit]  = useState(null);
 
-  /* ── Auth guard + carga ── */
+  /* Guard — redirige si no es líder */
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (u) => {
-      if (!u || !u.email?.endsWith("@bcp.com")) {
-        navigate("/auth-lider");
-        return;
-      }
-      setUsuario(u);
+    if (!cargandoRol && (!user || rol !== "lider")) {
+      navigate("/auth");
+    }
+  }, [cargandoRol, user, rol, navigate]);
 
+  /* Cargar datos */
+  useEffect(() => {
+    if (!liderDocId) return;
+    const cargar = async () => {
       try {
-        /* Datos del líder */
-        const lSnap = await getDocs(
-          query(collection(db, "lideres"), where("uid", "==", u.uid))
-        );
-        let liderDoc = null;
-        lSnap.forEach((d) => { liderDoc = { id: d.id, ...d.data() }; });
-        if (liderDoc) {
-          setLiderData(liderDoc);
-          setLiderDocId(liderDoc.id);
-        }
+        /* Info del líder */
+        const lSnap = await getDocs(query(collection(db, "lideres"), where("uid", "==", user.uid)));
+        lSnap.forEach((d) => setLiderData({ id: d.id, ...d.data() }));
 
-        /* Todos los practicantes */
+        /* Practicantes */
         const pSnap = await getDocs(collection(db, "practicantes"));
-        const lista = pSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setPracticantes(lista);
+        setPracticantes(pSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-        /* Perfiles favoritos */
-        if (liderDoc?.favoritos?.length) {
+        /* Favoritos */
+        const lDoc = lSnap.docs[0]?.data();
+        if (lDoc?.favoritos?.length) {
           const favs = await Promise.all(
-            liderDoc.favoritos.map(async (favId) => {
-              const ref  = doc(db, "practicantes", favId);
-              const snap = await getDoc(ref);
-              return snap.exists() ? { id: favId, ...snap.data() } : null;
+            lDoc.favoritos.map(async (fid) => {
+              const s = await getDoc(doc(db, "practicantes", fid));
+              return s.exists() ? { id: fid, ...s.data() } : null;
             })
           );
           setFavoritos(favs.filter(Boolean));
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setCargando(false);
-      }
-    });
-    return () => unsub();
-  }, [navigate]);
 
-  /* ── Quitar favorito ── */
+      } catch (e) { console.error(e); }
+      finally { setCargando(false); }
+    };
+    cargar();
+  }, [liderDocId, user]);
+
   const quitarFavorito = async (favId) => {
     await updateDoc(doc(db, "lideres", liderDocId), { favoritos: arrayRemove(favId) });
     setFavoritos((prev) => prev.filter((f) => f.id !== favId));
   };
 
+  const irAPerfil = (pid) => navigate(`/perfil/${pid}`);
+
   /* ── Métricas ── */
-  const totalPracticantes = practicantes.length;
+  const total      = practicantes.length;
+  const conExp     = practicantes.filter((p) => p.experiencia?.length > 0).length;
+  const conRot     = practicantes.filter((p) => p.rotaciones?.length > 0).length;
+  const perfilAlto = practicantes.filter((p) => calcComp(p) >= 70).length;
+  const conProy    = practicantes.filter((p) => p.proyectos?.length > 0).length;
 
-  const areaCount = practicantes.reduce((acc, p) => {
-    if (p.area) acc[p.area] = (acc[p.area] || 0) + 1;
-    return acc;
-  }, {});
-  const areaTop = Object.entries(areaCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const areaTop = Object.entries(
+    practicantes.reduce((acc,p) => { if(p.area) acc[p.area]=(acc[p.area]||0)+1; return acc; }, {})
+  ).sort((a,b) => b[1]-a[1]).slice(0,6).map(([label,value]) => ({ label:label.split(" ")[0], value }));
 
-  const skillCount = practicantes.reduce((acc, p) => {
-    (p.skills || []).forEach((s) => { acc[s] = (acc[s] || 0) + 1; });
-    return acc;
-  }, {});
-  const skillTop = Object.entries(skillCount).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
-  /* ── Top match (perfiles con más completitud) ── */
-  const calcCompletitud = (p) => {
-    const campos = [p.titulo, p.resumen, p.area, p.intereses,
-      p.experiencia?.length > 0, p.educacion?.length > 0,
-      p.idiomas?.length > 0, p.cursos?.length > 0,
-      p.skills?.length > 0, p.habilidadesBlandas?.length > 0];
-    return Math.round(campos.filter(Boolean).length / campos.length * 100);
-  };
-  const topMatch = [...practicantes]
-    .map((p) => ({ ...p, completitud: calcCompletitud(p) }))
-    .filter((p) => p.completitud >= 70)
-    .sort((a, b) => b.completitud - a.completitud)
-    .slice(0, 6);
+  const compBuckets = { "< 40%":0, "40–60%":0, "60–80%":0, "80–100%":0 };
+  practicantes.forEach((p) => {
+    const c = calcComp(p);
+    if(c<40) compBuckets["< 40%"]++;
+    else if(c<60) compBuckets["40–60%"]++;
+    else if(c<80) compBuckets["60–80%"]++;
+    else compBuckets["80–100%"]++;
+  });
 
-  if (cargando) return (
-    <div className="pantalla-carga">
-      <div className="spinner-bcp" />
-      <p>Cargando dashboard...</p>
-    </div>
+  const sparkData = [Math.max(1,total-5),total-3,total-4,total-1,total-2,total].map(v => Math.max(0,v));
+  const favFiltrados = favoritos.filter(p => !busqFav || p.nombre?.toLowerCase().includes(busqFav.toLowerCase()));
+
+  if (cargandoRol || cargando) return (
+    <div className="dl-carga"><div className="spinner-bcp"/><p>Cargando dashboard...</p></div>
   );
 
+  if (rol !== "lider") return null; // guard extra mientras redirige
+
   return (
-    <div>
-      <Navbar />
+    <div className="dl-wrapper">
 
-      <div className="container mt-4" style={{ maxWidth: 1100 }}>
+      {/* ── SIDEBAR ── */}
+      <aside className="dl-sidebar">
+        <div className="dl-sidebar-logo">
+          <div className="dl-logo-icon">B</div>
+          <span className="dl-logo-text">Talento BCP</span>
+        </div>
 
-        {/* ══ HEADER ══ */}
-        <div className="d-flex align-items-center justify-content-between mb-4">
-          <div>
-            <h3 style={{ color: "#003DA5", fontWeight: 700 }}>
-              👋 Hola, {liderData?.nombre || usuario?.email}
-            </h3>
-            <p className="text-muted mb-0">Panel exclusivo para líderes BCP</p>
+        <div className="dl-sidebar-user">
+          <div className="dl-user-avatar">
+            {(liderData?.nombre||user?.email||"L")[0].toUpperCase()}
           </div>
-          <div className="d-flex gap-2">
-            <button className="btn btn-outline-primary btn-sm" onClick={() => navigate("/catalogo")}>
-              Ver catálogo
-            </button>
-            <button className="btn btn-outline-danger btn-sm" onClick={async () => { await signOut(auth); navigate("/"); }}>
-              Cerrar sesión
-            </button>
+          <div className="dl-user-info">
+            <p className="dl-user-nombre">{liderData?.nombre||"Líder"}</p>
+            <p className="dl-user-email">{user?.email?.split("@")[0]}</p>
           </div>
         </div>
 
-        {/* ══ TABS ══ */}
-        <div className="d-flex gap-2 mb-4">
+        <nav className="dl-nav">
           {[
-            { id: "metricas", label: "📊 Métricas" },
-            { id: "favoritos", label: `⭐ Favoritos (${favoritos.length})` },
-            { id: "match", label: "🎯 Top Match" },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              className={`btn btn-sm ${tabActiva === tab.id ? "btn-primary" : "btn-outline-secondary"}`}
-              onClick={() => setTabActiva(tab.id)}
+            { id:"metricas",  Icon:FiTrendingUp, label:"Métricas" },
+            { id:"favoritos", Icon:FiStar,       label:"Favoritos",  badge:favoritos.length,                          badgeColor:"#d97706" },
+          ].map(({ id, Icon, label, badge, badgeColor }) => (
+            <button key={id}
+              className={`dl-nav-btn ${tabActiva===id?"dl-nav-active":""}`}
+              onClick={() => setTabActiva(id)}
             >
-              {tab.label}
+              <Icon size={17}/><span>{label}</span>
+              {badge>0 && <span className="dl-nav-badge" style={{background:badgeColor}}>{badge}</span>}
             </button>
           ))}
+        </nav>
+
+        <div className="dl-sidebar-footer">
+          <button className="dl-nav-btn dl-nav-btn-sec" onClick={() => navigate("/catalogo")}>
+            <FiUsers size={17}/><span>Ver catálogo</span>
+          </button>
+          <button className="dl-nav-btn dl-nav-btn-sec" onClick={async () => { await signOut(auth); navigate("/"); }}>
+            <FiLogOut size={17}/><span>Cerrar sesión</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* ── MAIN ── */}
+      <main className="dl-main">
+        <div className="dl-topbar">
+          <div>
+            <h1 className="dl-topbar-titulo">
+              {tabActiva==="metricas" ? "Métricas de Talento" : tabActiva==="favoritos" ? "Mis Favoritos" : " "}
+            </h1>
+            <p className="dl-topbar-sub">
+              Bienvenido, <strong>{liderData?.nombre||user?.email?.split("@")[0]}</strong>
+            </p>
+          </div>
         </div>
 
-        {/* ══ TAB: MÉTRICAS ══ */}
-        {tabActiva === "metricas" && (
-          <div>
-            {/* KPI cards */}
-            <div className="row g-3 mb-4">
-              <div className="col-md-4">
-                <div className="card text-center p-4 shadow-sm" style={{ borderTop: "4px solid #003DA5" }}>
-                  <h1 style={{ fontSize: 48, color: "#003DA5", fontWeight: 800 }}>{totalPracticantes}</h1>
-                  <p className="text-muted mb-0">Practicantes registrados</p>
-                </div>
-              </div>
-              <div className="col-md-4">
-                <div className="card text-center p-4 shadow-sm" style={{ borderTop: "4px solid #f5a623" }}>
-                  <h1 style={{ fontSize: 48, color: "#f5a623", fontWeight: 800 }}>{favoritos.length}</h1>
-                  <p className="text-muted mb-0">Perfiles guardados</p>
-                </div>
-              </div>
-              <div className="col-md-4">
-                <div className="card text-center p-4 shadow-sm" style={{ borderTop: "4px solid #28a745" }}>
-                  <h1 style={{ fontSize: 48, color: "#28a745", fontWeight: 800 }}>{topMatch.length}</h1>
-                  <p className="text-muted mb-0">Perfiles con 70%+ completitud</p>
-                </div>
-              </div>
-            </div>
+        <div className="dl-content">
 
-            <div className="row g-3">
-              {/* Áreas */}
-              <div className="col-md-6">
-                <div className="card p-3 shadow-sm h-100">
-                  <h6 style={{ color: "#003DA5", fontWeight: 700 }}>📂 Áreas más populares</h6>
-                  {areaTop.map(([area, count]) => (
-                    <div key={area} className="mb-2">
-                      <div className="d-flex justify-content-between mb-1">
-                        <small>{area}</small>
-                        <small><strong>{count}</strong></small>
-                      </div>
-                      <div className="progress" style={{ height: 6 }}>
-                        <div
-                          className="progress-bar"
-                          style={{
-                            width: `${Math.round((count / totalPracticantes) * 100)}%`,
-                            background: "#003DA5",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          {/* ════ MÉTRICAS ════ */}
+          {tabActiva==="metricas" && (
+            <div className="dl-metricas">
+              <div className="dl-kpi-row">
+                <KpiCard label="Total practicantes" value={total} sub="Registrados en plataforma"
+                  color="#003DA5" Icon={RiTeamLine} spark={sparkData}/>
+                <KpiCard label="Perfil 70%+" value={perfilAlto}
+                  sub={`${total>0?Math.round(perfilAlto/total*100):0}% del total`}
+                  color="#16a34a" Icon={HiOutlineBriefcase}/>
+                <KpiCard label="Con experiencia" value={conExp}
+                  sub={`${total>0?Math.round(conExp/total*100):0}% del total`}
+                  color="#d97706" Icon={HiOutlineBriefcase}/>
+                <KpiCard label="Mis favoritos" value={favoritos.length}
+                  sub="Guardados por ti" color="#7c3aed" Icon={FiStar}/>
               </div>
 
-              {/* Skills */}
-              <div className="col-md-6">
-                <div className="card p-3 shadow-sm h-100">
-                  <h6 style={{ color: "#003DA5", fontWeight: 700 }}>⚡ Skills más frecuentes</h6>
-                  <div className="d-flex flex-wrap gap-2 mt-2">
-                    {skillTop.map(([skill, count]) => (
-                      <span
-                        key={skill}
-                        className="badge"
-                        style={{ background: "#003DA5", fontSize: 12 }}
-                      >
-                        {skill} <span style={{ background: "rgba(255,255,255,0.3)", borderRadius: 4, padding: "0 4px" }}>{count}</span>
-                      </span>
-                    ))}
-                  </div>
+              <div className="dl-charts-row">
+                <div className="dl-chart-card dl-chart-card-lg">
+                  <h3 className="dl-chart-titulo"><HiOutlineOfficeBuilding size={15}/> Practicantes por área</h3>
+                  <HBarChart data={areaTop} color="#003DA5"/>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ══ TAB: FAVORITOS ══ */}
-        {tabActiva === "favoritos" && (
-          <div>
-            {favoritos.length === 0 ? (
-              <div className="text-center mt-5">
-                <p style={{ fontSize: 48 }}>☆</p>
-                <h5>Aún no tienes favoritos</h5>
-                <p className="text-muted">Guarda perfiles desde el catálogo o desde el perfil de cada practicante</p>
-                <button className="btn btn-primary mt-2" onClick={() => navigate("/catalogo")}>
-                  Explorar talento
-                </button>
-              </div>
-            ) : (
-              <div className="row g-3">
-                {favoritos.map((p) => (
-                  <div key={p.id} className="col-md-4">
-                    <div className="card catalogo-card shadow-sm p-3">
-                      <div className="d-flex align-items-center">
-                        <div className="avatar-catalogo">{p.nombre?.charAt(0)?.toUpperCase()}</div>
-                        <div className="ms-3">
-                          <h5 className="mb-0">{p.nombre}</h5>
-                          <small className="text-muted">{p.titulo || "Sin título"}</small>
+                <div className="dl-chart-card">
+                  <h3 className="dl-chart-titulo"><FiTrendingUp size={15}/> Completitud de perfiles</h3>
+                  <div className="dl-donut-wrap">
+                    <DonutChart segments={[
+                      { label:"80–100%", value:compBuckets["80–100%"], color:"#16a34a" },
+                      { label:"60–80%",  value:compBuckets["60–80%"],  color:"#003DA5" },
+                      { label:"40–60%",  value:compBuckets["40–60%"],  color:"#d97706" },
+                      { label:"< 40%",   value:compBuckets["< 40%"],   color:"#e5e7eb" },
+                    ]}/>
+                    <div className="dl-donut-legend">
+                      {[
+                        { l:"80–100%", c:"#16a34a", v:compBuckets["80–100%"] },
+                        { l:"60–80%",  c:"#003DA5", v:compBuckets["60–80%"] },
+                        { l:"40–60%",  c:"#d97706", v:compBuckets["40–60%"] },
+                        { l:"< 40%",   c:"#e5e7eb", v:compBuckets["< 40%"] },
+                      ].map(s => (
+                        <div key={s.l} className="dl-legend-item">
+                          <span className="dl-legend-dot" style={{background:s.c}}/>
+                          <span className="dl-legend-label">{s.l}</span>
+                          <span className="dl-legend-val">{s.v}</span>
                         </div>
-                      </div>
-                      <div className="mt-2">
-                        <span className="badge bg-primary">{p.area || "Sin área"}</span>
-                      </div>
-                      <div className="mt-2">
-                        {(p.skills || []).slice(0, 4).map((s, i) => (
-                          <span key={i} className="badge bg-secondary me-1">{s}</span>
-                        ))}
-                      </div>
-                      <div className="d-flex gap-2 mt-3">
-                        <button
-                          className="btn btn-outline-primary btn-sm flex-fill"
-                          onClick={() => navigate(`/perfil/${p.id}`)}
-                        >
-                          Ver perfil
-                        </button>
-                        <button
-                          className="btn btn-outline-warning btn-sm"
-                          onClick={() => quitarFavorito(p.id)}
-                          title="Quitar de favoritos"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ══ TAB: MATCH ══ */}
-        {tabActiva === "match" && (
-          <div>
-            <div className="alert alert-primary mb-3" style={{ fontSize: 13 }}>
-              🎯 <strong>Top candidatos:</strong> perfiles con mayor completitud y más habilidades cargadas
-            </div>
-            <div className="row g-3">
-              {topMatch.map((p) => (
-                <div key={p.id} className="col-md-4">
-                  <div
-                    className="card catalogo-card shadow-sm p-3"
-                    style={{ border: "2px solid #003DA5", position: "relative" }}
-                  >
-                    <span
-                      style={{
-                        position: "absolute", top: 10, right: 10,
-                        background: "#003DA5", color: "#fff",
-                        borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 700,
-                      }}
-                    >
-                      {p.completitud}% ✓
-                    </span>
-
-                    <div className="d-flex align-items-center">
-                      <div className="avatar-catalogo">{p.nombre?.charAt(0)?.toUpperCase()}</div>
-                      <div className="ms-3">
-                        <h5 className="mb-0">{p.nombre}</h5>
-                        <small className="text-muted">{p.titulo || "Sin título"}</small>
-                      </div>
-                    </div>
-
-                    <div className="mt-2">
-                      <span className="badge bg-primary">{p.area || "Sin área"}</span>
-                    </div>
-
-                    <div className="mt-2">
-                      {(p.skills || []).slice(0, 4).map((s, i) => (
-                        <span key={i} className="badge bg-secondary me-1">{s}</span>
                       ))}
                     </div>
-
-                    <div className="mt-3 d-flex gap-2">
-                      <button
-                        className="btn btn-primary btn-sm flex-fill"
-                        onClick={() => navigate(`/perfil/${p.id}`)}
-                      >
-                        Ver perfil
-                      </button>
-                      {p.email && (
-                        <a
-                          href={`mailto:${p.email}?subject=Oportunidad BCP`}
-                          className="btn btn-outline-primary btn-sm"
-                        >
-                          📩
-                        </a>
-                      )}
-                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
+              </div>
 
-        <div style={{ height: 60 }} />
+  
+            </div>
+          )}
+
+          {/* ════ FAVORITOS ════ */}
+          {tabActiva==="favoritos" && (
+            <div>
+              {favoritos.length===0 ? (
+                <div className="dl-empty-state">
+                  <FiStar size={48} color="#d1d5db"/>
+                  <h5>Aún no tienes favoritos</h5>
+                  <p>Guarda perfiles desde el catálogo de talento</p>
+                  <button className="dl-btn-ir" onClick={() => navigate("/catalogo")}>Explorar talento</button>
+                </div>
+              ) : (
+                <>
+                  <div className="dl-fav-search-wrap">
+                    <IoSearchOutline size={15} style={{color:"#9ca3af",flexShrink:0}}/>
+                    <input className="dl-fav-search" placeholder="Buscar en favoritos..." value={busqFav} onChange={e=>setBusqFav(e.target.value)}/>
+                  </div>
+                  <div className="dl-grid-3">
+                    {favFiltrados.map(p => (
+                      <TarjetaFav key={p.id} p={p} onVer={() => irAPerfil(p.id)} onQuitar={() => quitarFavorito(p.id)}/>
+                    ))}
+                    {favFiltrados.length===0 && <p className="dl-empty-txt">Sin resultados para "{busqFav}"</p>}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+
+    </div>
+  );
+}
+
+/* ── KPI card ── */
+function KpiCard({ label, value, sub, color, Icon, spark }) {
+  return (
+    <div className="dl-kpi-card">
+      <div className="dl-kpi-top">
+        <div className="dl-kpi-icon-wrap" style={{background:`${color}18`,color}}><Icon size={18}/></div>
+        {spark && <SparkLine values={spark} color={color} width={90} height={38}/>}
+      </div>
+      <p className="dl-kpi-value" style={{color}}>{value}</p>
+      <p className="dl-kpi-label">{label}</p>
+      {sub && <p className="dl-kpi-sub">{sub}</p>}
+    </div>
+  );
+}
+
+/* ── Tarjeta favorito ── */
+function TarjetaFav({ p, onVer, onQuitar }) {
+  const ubicacion = [p.ciudad,p.pais].filter(Boolean).join(", ")||p.distrito;
+  return (
+    <div className="dl-person-card">
+      <div className="dl-person-header">
+        <div className="dl-person-avatar">
+          {p.foto
+            ? <img src={p.foto} alt={p.nombre} style={{width:"100%",height:"100%",borderRadius:"50%",objectFit:"cover"}}/>
+            : p.nombre?.charAt(0)?.toUpperCase()}
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <p className="dl-person-nombre">{p.nombre}</p>
+          <p className="dl-person-titulo">{p.titulo||"Sin título"}</p>
+          {ubicacion && <p className="dl-person-meta"><FiMapPin size={10}/> {ubicacion}</p>}
+        </div>
+      </div>
+      {p.area && <span className="dl-badge-area">{p.area}</span>}
+      <div className="dl-person-tags">
+        {(p.skills||[]).slice(0,3).map((s,i) => <span key={i} className="dl-tag-tec">{s}</span>)}
+      </div>
+      <div className="dl-person-actions">
+        <button className="dl-btn-ver" onClick={onVer}>Ver perfil</button>
+        {p.email && (
+          <a href={`mailto:${p.email}?subject=Oportunidad BCP`} className="dl-btn-mail"><FiMail size={13}/></a>
+        )}
+        <button className="dl-btn-quitar" onClick={onQuitar} title="Quitar de favoritos">✕</button>
       </div>
     </div>
   );

@@ -1052,6 +1052,7 @@
   flex: 1;
   height: 100vh; /* CLAVE */
   overflow-y: auto; /* SOLO aquí hay scroll */
+<<<<<<< HEAD
 }
 
 @media (max-width: 768px) {
@@ -1191,3 +1192,6 @@ body {
 }
 
 
+=======
+}
+>>>>>>> master

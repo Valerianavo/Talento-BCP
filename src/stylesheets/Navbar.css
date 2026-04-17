@@ -1,7 +1,91 @@
+/* ===== NAVBAR ===== */
 .navbar-custom {
-  background-color: #002a8d;
-  color: white;
+  background-color: #ffffff;
+  color: #002abd;
   display: flex;
   justify-content: space-between;
-  padding: 15px;
+  align-items: center;
+  padding: 16px 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ===== LOGO ===== */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.logo-img {
+  width: 80px;
+ 
+  object-fit: contain;
+}
+
+.logo-text {
+  font-size: 18px;
+  font-weight: 6;
+  color: #002abd;
+}
+
+/* ===== NAV LINKS ===== */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== LINKS (YA NO BOTONES) ===== */
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #002abd;
+  text-decoration: none;
+  opacity: 0.85;
+  position: relative;
+  transition: 0.25s;
+}
+
+.nav-link:hover {
+  opacity: 1;
+}
+
+/* línea animada abajo */
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0%;
+  height: 2px;
+  background: #ff5000;
+  transition: 0.3s;
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* ===== ICONOS ===== */
+.icon-btn {
+  font-size: 13px;
+}
+
+/* ===== LINK ACTIVO / IMPORTANTE ===== */
+.nav-highlight {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+/* ===== LOGOUT (más discreto) ===== */
+.nav-logout {
+  color: #ff5000;
+}
+
+.nav-logout:hover {
+  color: #002abd;
 }

@@ -2,18 +2,23 @@
   "name": "talento-bcp",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://valerianavo.github.io/Talento-BCP/",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "bootstrap": "^5.3.8",
     "firebase": "^12.11.0",
+    "metricui": "^1.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-icons": "^5.6.0",
     "react-router-dom": "^7.14.0",
     "sweetalert2": "^11.26.24"
   },
@@ -25,6 +30,7 @@
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "gh-pages": "^6.3.0",
     "globals": "^17.4.0",
     "vite": "^8.0.4"
   }

@@ -1,12 +1,130 @@
-.landing-container {
-  text-align: center;
-  padding: 100px 20px;
-  background: #f4f6f8;
+/* ===== BASE ===== */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #002abd;
 }
 
-.botones {
-  margin-top: 20px;
+.landing-container {
+  height: 90vh;
+  background: url("https://images.unsplash.com/photo-1556761175-b413da4baf72")
+    center/cover no-repeat;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* CAPA OSCURA */
+.landing-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 23, 99, 0.384); /* azul BCP con opacidad */
+}
+
+/* CONTENIDO ENCIMA */
+.landing-container > * {
+  position: relative;
+  z-index: 1;
+  color: white;
+}
+
+/* OVERLAY OSCURO */
+.overlay-hero {
+  background: rgba(3, 0, 0, 0.74); /* 👈 oscurece la imagen */
+  color: #ffffff;
+  padding: 50px;
+  border-radius: 12px;
+  text-align: center;
+  max-width: 650px;
+}
+
+/* TEXTO */
+.overlay-hero h1 {
+  font-size: 38px;
+  margin-bottom: 12px;
+}
+
+.overlay-hero p {
+  font-size: 17px;
+  opacity: 0.9;
+}
+
+/* ===== BOTONES ===== */
+.hero-buttons {
+  margin-top: 25px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: #002abd;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-secondary {
+  background: #ff5000;
+  color: white;
+  padding: 12px 22px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+  opacity: 0.9;
+}
+
+/* ===== SECCIONES ===== */
+.section {
+  padding: 70px 20px;
+  text-align: center;
+}
+
+.section.alt {
+  background: #f4f6fb;
+}
+
+/* ===== CARDS ===== */
+.cards {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 24px;
+  margin-top: 35px;
+  flex-wrap: wrap;
+}
+
+.info-card {
+  background: white;
+  padding: 25px;
+  border-radius: 14px;
+  width: 260px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  transition: 0.25s;
+}
+
+.info-card:hover {
+  transform: translateY(-6px);
+}
+
+/* ===== ICONOS ===== */
+.icon {
+  font-size: 28px;
+  color: #002abd;
+  margin-bottom: 12px;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  text-align: center;
+  padding: 20px;
+  background: #002abd;
+  color: white;
 }
