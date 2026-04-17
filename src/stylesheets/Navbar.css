@@ -89,3 +89,71 @@
 .nav-logout:hover {
   color: #002abd;
 }
+
+/* Hover texto con degradado */
+.nav-link:hover {
+  background: linear-gradient(90deg, #002A8D, #FF7800);
+
+  -webkit-background-clip: text; /* Chrome, Edge */
+  background-clip: text;         /* estándar */
+
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+
+  opacity: 1;
+}
+
+/* Ícono NO con degradado → solo color */
+.nav-link:hover .icon-btn {
+  color: #FF7800; /* naranja BCP */
+}
+
+
+.nav-link,
+.nav-link .icon-btn {
+  transition: all 0.3s ease;
+}
+
+/* ========================= */
+/* 📱 NAVBAR RESPONSIVE */
+/* ========================= */
+@media (max-width: 768px) {
+
+
+
+  /* Navbar más compacto */
+  .navbar-custom {
+    padding: 12px 16px;
+  }
+
+  /* Contenedor de links */
+  .nav-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  /* 👇 Oculta SOLO texto (forma correcta) */
+  .link-text {
+    display: none;
+  }
+
+  /* Centra iconos */
+  .nav-link {
+    justify-content: center;
+    padding: 8px;
+  }
+
+  /* Íconos más grandes */
+  .icon-btn {
+    font-size: 20px;
+  }
+
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  transition: 0.2s;
+}

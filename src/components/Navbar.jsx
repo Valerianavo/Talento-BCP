@@ -27,12 +27,14 @@ function Navbar() {
       <div className="nav-actions">
 
         <Link to="/" className="nav-link">
-          <FaHome className="icon-btn" /> Inicio
+          <FaHome className="icon-btn" />
+          <span className="link-text">Inicio</span>
         </Link>
 
         {/* El catálogo es visible para todos */}
         <Link to="/catalogo" className="nav-link">
-          <FaUsers className="icon-btn" /> Buscar Talento
+          <FaUsers className="icon-btn" />
+          <span className="link-text">Buscar Talento</span>
         </Link>
 
         {!cargando && (
@@ -40,28 +42,26 @@ function Navbar() {
             {user ? (
               <>
                 {rol === "lider" ? (
-                  /* LÍDER → Dashboard*/
-                  <>
-                    <Link to="/dashboard-lider" className="nav-link nav-highlight">
-                      <FaChartBar className="icon-btn" /> Dashboard
-                    </Link>
-                  </>
+                  <Link to="/dashboard-lider" className="nav-link nav-highlight">
+                    <FaChartBar className="icon-btn" />
+                    <span className="link-text">Dashboard</span>
+                  </Link>
                 ) : (
-                  /* PRACTICANTE → Mi perfil (solo ver) */
-                  <>
-                    <Link to="/perfil" className="nav-link">
-                      <FaUser className="icon-btn" /> Mi perfil
-                    </Link>
-                  </>
+                  <Link to="/perfil" className="nav-link">
+                    <FaUser className="icon-btn" />
+                    <span className="link-text">Mi perfil</span>
+                  </Link>
                 )}
 
                 <button className="nav-link nav-logout" onClick={cerrarSesion}>
-                  <FaSignOutAlt className="icon-btn" /> Salir
+                  <FaSignOutAlt className="icon-btn" />
+                  <span className="link-text">Salir</span>
                 </button>
               </>
             ) : (
               <Link to="/auth" className="nav-link">
-                <FaUser className="icon-btn" /> Iniciar sesión
+                <FaUser className="icon-btn" />
+                <span className="link-text">Iniciar sesión</span>
               </Link>
             )}
           </>

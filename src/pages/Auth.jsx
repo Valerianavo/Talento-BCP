@@ -10,7 +10,7 @@ import {
 import { db, auth } from "../firebase/firebase";
 import "../stylesheets/Auth.css";
 import { FiUser, FiMail, FiLock, FiArrowLeft, FiAlertCircle } from "react-icons/fi";
-
+import logo from "../images/LogoBCP.png";
 /*
   REGLAS DE ACCESO
  ─────────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ function Auth() {
       {/* ── IZQUIERDA ── */}
       <div className="auth-left">
         <div className="auth-left-content">
-          <div className="auth-left-logo">B</div>
+<img src={logo} alt="Logo" className="auth-left-logo-img" />
           <h2>Talento BCP</h2>
           <p>
             {modo === "registro"
