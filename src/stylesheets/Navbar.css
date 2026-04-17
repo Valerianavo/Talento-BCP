@@ -27,17 +27,39 @@
 
 .logo-text {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 200;
   color: #002abd;
 }
 
 /* ===== NAV LINKS (desktop) ===== */
-.nav-actions {
+/* ===== NAVBAR ===== */
+.navbar-custom {
+  background-color: #ffffff;
+  color: #002abd;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  padding: 14px 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 400;
 }
 
+/* ===== LOGO ===== */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.logo-img {
+  width: 80px;
+  object-fit: contain;
+}
+
+/* ===== NAV ===== */
 .nav-link {
   display: flex;
   align-items: center;
@@ -47,18 +69,29 @@
   text-decoration: none;
   opacity: 0.85;
   position: relative;
-  transition: 0.25s;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  padding: 0;
+  transition: all 0.25s ease;
 }
 
-.nav-link:hover {
-  opacity: 1;
+/* ICONOS */
+.icon-btn {
+  font-size: 13px;
+  transition: color 0.25s ease;
 }
 
+/* TEXTO GRADIENTE */
+.nav-link:hover span {
+  background: linear-gradient(90deg, #002abd, #ff5000);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ICONO NARANJA */
+.nav-link:hover .icon-btn {
+  color: #ff5000;
+}
+
+/* SUBRAYADO */
 .nav-link::after {
   content: "";
   position: absolute;
@@ -74,23 +107,15 @@
   width: 100%;
 }
 
-.icon-btn {
-  font-size: 13px;
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  flex-wrap: nowrap;   /* 👈 CLAVE */
+  white-space: nowrap; /* 👈 evita saltos raros */
 }
 
-.nav-highlight {
-  background: rgba(0, 42, 189, 0.08);
-  padding: 6px 12px;
-  border-radius: 6px;
-}
-
-.nav-logout {
-  color: #ff5000;
-}
-
-.nav-logout:hover {
-  color: #002abd;
-}
 
 /* ===== HAMBURGER ===== */
 .nav-hamburger {
@@ -101,44 +126,73 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
-  z-index: 500;
 }
 
 .nav-hamburger span {
-  display: block;
   width: 24px;
   height: 2px;
   background: #002abd;
-  border-radius: 2px;
-  transition: transform 0.25s, opacity 0.25s;
+  transition: 0.25s;
 }
 
+/* animación X */
+.nav-hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
 
-.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.nav-hamburger.open span:nth-child(2) { opacity: 0; }
-.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.nav-hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
 
-.nav-hamburger.open {
-  position: fixed;
-  top: 16px;
-  right: 16px;
+.nav-hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
 }
 
 /* ===== MOBILE MENU ===== */
 .nav-mobile-overlay {
-  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 900;
 }
 
-@media (max-width: 700px) {
-  .navbar-custom {
-    padding: 12px 18px;
-  }
+.nav-mobile-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
 
-  .logo-text {
-    font-size: 15px;
-  }
+  background: #fff;
+  padding: 60px 20px 20px;
 
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  animation: dropDown 0.3s ease forwards;
+  z-index: 1000;
+}
+
+@keyframes dropDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+/* X dentro menú */
+.nav-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #002abd;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
   .nav-actions {
     display: none;
   }
@@ -146,77 +200,4 @@
   .nav-hamburger {
     display: flex;
   }
-
-  .nav-mobile-overlay {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    z-index: 398;
-    animation: fadeIn 0.2s;
-  }
-
-  .nav-mobile-menu {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: min(280px, 80vw);
-    background: #fff;
-    z-index: 399;
-    display: flex;
-    flex-direction: column;
-    padding: 70px 24px 32px;
-    gap: 8px;
-    box-shadow: -4px 0 24px rgba(0,0,0,0.12);
-    animation: slideInRight 0.25s ease;
-  }
-
-  .nav-mobile-menu .nav-link {
-    font-size: 16px;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
-    opacity: 1;
-  }
-
-  .nav-mobile-menu .nav-link::after {
-    display: none;
-  }
-
-  .nav-mobile-menu .nav-logout {
-    margin-top: 8px;
-    border-bottom: none;
-  }
-}
-
-@keyframes fadeIn      { from { opacity: 0 } to { opacity: 1 } }
-@keyframes slideInRight { from { transform: translateX(100%) } to { transform: none } }
-
-/* ═══════════════════════════════════
-   BADGE DE FAVORITOS EN NAVBAR
-   Usable con: <Link to="/dashboard-lider" className="nav-fav-badge">
-═══════════════════════════════════ */
-.nav-fav-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #fff8e6;
-  color: #d97706;
-  border: 1.5px solid #fde68a;
-  border-radius: 20px;
-  padding: 5px 12px;
-  font-size: 13px;
-  font-weight: 700;
-  text-decoration: none;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background .15s;
-  min-height: 36px;
-}
-.nav-fav-badge:hover { background: #fef3c7; color: #b45309; }
-.nav-fav-num { font-weight: 800; }
-
-/* Para el mobile menu también */
-@media (max-width: 700px) {
-  .nav-fav-badge { width: 100%; justify-content: flex-start; border-radius: 0; background: none; border: none; border-bottom: 1px solid #f0f0f0; padding: 12px 0; color: #d97706; font-size: 16px; }
 }

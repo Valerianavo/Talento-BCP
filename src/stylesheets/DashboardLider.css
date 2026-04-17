@@ -21,8 +21,9 @@
 /* ════════ LAYOUT ════════ */
 .dl-wrapper {
   display: flex;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  height: auto;
+  overflow: visible;
   background: #f8fafc;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
@@ -48,23 +49,18 @@
   border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .dl-logo-icon {
-  width: 34px;
-  height: 34px;
-  background: white;
-  color: var(--bcp-blue);
-  font-size: 18px;
-  font-weight: 900;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  display: block;
+}
+.dl-sidebar-logo {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  gap: 10px;
 }
 .dl-logo-text {
-  font-size: 14px;
-  font-weight: 700;
   color: white;
-  letter-spacing: .3px;
 }
 
 /* usuario */
@@ -114,56 +110,103 @@
   text-overflow: ellipsis;
 }
 
-/* nav */
+/* ═════════ NAV SIDEBAR BCP ═════════ */
+
 .dl-nav {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px;
   padding: 14px 12px;
   flex: 1;
   overflow-y: auto;
 }
+
+/* BOTONES */
 .dl-nav-btn {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 11px 12px;
   background: transparent;
   border: none;
-  border-radius: 8px;
-  color: rgba(255,255,255,0.7);
+  border-radius: 10px;
+
+  color: rgba(255, 255, 255, 0.75);
   font-size: 13px;
   font-weight: 500;
+
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s, color 0.15s;
+
+  transition: all 0.2s ease;
   position: relative;
 }
+
+/* HOVER (azul suave BCP) */
 .dl-nav-btn:hover {
-  background: rgba(255,255,255,0.1);
-  color: white;
-}
-.dl-nav-active {
-  background: rgba(255,255,255,0.18) !important;
-  color: white !important;
-  font-weight: 700;
-}
-.dl-nav-badge {
-  margin-left: auto;
-  padding: 2px 7px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
-  color: white;
+  background: rgba(0, 61, 165, 0.25); /* azul BCP */
+  color: #ffffff;
+  transform: translateX(2px);
 }
 
+/* ACTIVO (azul fuerte + acento naranja) */
+.dl-nav-active {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 61, 165, 0.95) 0%,
+    rgba(0, 61, 165, 0.75) 100%
+  ) !important;
+
+  color: #ffffff !important;
+  font-weight: 700;
+
+  box-shadow: inset 3px 0 0 #ff6600; /* acento naranja BCP */
+}
+
+/* ICONO (si tienes uno dentro) */
+.dl-nav-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.dl-nav-btn:hover svg {
+  transform: scale(1.05);
+}
+
+/* BADGE */
+.dl-nav-badge {
+  margin-left: auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  background: #ff6600; /* naranja BCP */
+  color: #ffffff;
+
+  box-shadow: 0 2px 6px rgba(255, 102, 0, 0.35);
+}
+
+/* opcional: scroll más limpio */
+.dl-nav::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dl-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
 /* ════════ MAIN ════════ */
 .dl-main {
   flex: 1;
+  min-height: 100vh;
+  height: auto;
+
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+
+
 }
 
 /* topbar */
@@ -180,7 +223,7 @@
 .dl-topbar-titulo {
   font-size: 20px;
   font-weight: 800;
-  color: #0f172a;
+  color: #ff6000;
   margin: 0 0 2px;
 }
 .dl-topbar-sub {
@@ -217,91 +260,218 @@
 }
 @keyframes spin { to { transform:rotate(360deg); } }
 
-/* ════════ KPI CARDS ════════ */
+/* ════════ KPI CARDS BCP ════════ */
+
 .dl-kpi-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
   margin-bottom: 20px;
 }
-@media (max-width: 1100px) { .dl-kpi-row { grid-template-columns: repeat(2,1fr); } }
 
-.dl-kpi-card {
-  background: white;
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  box-shadow: var(--shadow);
-  border: 1px solid #e2e8f0;
-  transition: box-shadow 0.2s;
+@media (max-width: 1100px) {
+  .dl-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
-.dl-kpi-card:hover { box-shadow: var(--shadow-md); }
 
+@media (max-width: 600px) {
+  .dl-kpi-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* CARD */
+.dl-kpi-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 18px 20px;
+
+  border: 1px solid rgba(0, 61, 165, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* glow azul suave al hover */
+.dl-kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 61, 165, 0.12);
+}
+
+/* barra decorativa superior BCP */
+.dl-kpi-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  height: 4px;
+  width: 100%;
+
+  background: linear-gradient(
+    90deg,
+    #003DA5 0%,
+    #1E7FD4 60%,
+    #FF6600 100%
+  );
+}
+
+/* HEADER */
 .dl-kpi-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 12px;
 }
+
+/* ICONO */
 .dl-kpi-icon-wrap {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+
+  background: rgba(0, 61, 165, 0.08);
+  color: #003DA5;
 }
+
+/* VALOR */
 .dl-kpi-value {
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 800;
-  margin: 0 0 3px;
+  margin: 0 0 4px;
   line-height: 1;
+
+  color: #0f172a;
 }
+
+/* LABEL */
 .dl-kpi-label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #003DA5;
   margin: 0 0 2px;
 }
+
+/* SUBTEXTO */
 .dl-kpi-sub {
   font-size: 11px;
-  color: #94a3b8;
+  color: #64748b;
   margin: 0;
 }
 
-/* ════════ CHARTS ════════ */
+/* BADGE OPCIONAL (si usas tendencias) */
+.dl-kpi-badge-up {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.dl-kpi-badge-down {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+/* ════════ CHARTS BCP ════════ */
+
 .dl-charts-row {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
   gap: 14px;
   margin-bottom: 14px;
 }
+
 .dl-charts-row-3 {
   grid-template-columns: repeat(3, 1fr);
 }
+
 @media (max-width: 1000px) {
-  .dl-charts-row, .dl-charts-row-3 { grid-template-columns: 1fr; }
+  .dl-charts-row,
+  .dl-charts-row-3 {
+    grid-template-columns: 1fr;
+  }
 }
 
+/* CARD */
 .dl-chart-card {
-  background: white;
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  box-shadow: var(--shadow);
-  border: 1px solid #e2e8f0;
-}
-.dl-chart-card-lg { grid-column: span 1; }
+  background: #ffffff;
+  border-radius: 14px;
 
+  padding: 18px 20px;
+
+  border: 1px solid rgba(0, 61, 165, 0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+
+  position: relative;
+  overflow: hidden;
+
+  transition: all 0.25s ease;
+}
+
+/* hover elegante tipo dashboard */
+.dl-chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 61, 165, 0.12);
+}
+
+/* barra superior BCP */
+.dl-chart-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  height: 3px;
+  width: 100%;
+
+  background: linear-gradient(
+    90deg,
+    #003DA5 0%,
+    #1E7FD4 60%,
+    #FF6600 100%
+  );
+}
+
+/* TITULO */
 .dl-chart-titulo {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
+
   font-size: 13px;
   font-weight: 700;
-  color: #1e293b;
+
+  color: #003DA5;
+
   margin: 0 0 14px;
 }
 
+/* icono del titulo (si usas svg/icon) */
+.dl-chart-titulo svg {
+  color: #FF6600;
+}
+
+/* variante grande */
+.dl-chart-card-lg {
+  grid-column: span 1;
+}
+
+/* opcional: separador interno suave */
+.dl-chart-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  height: 1px;
+  background: rgba(0, 61, 165, 0.06);
+}
 /* ── Horizontal bar ── */
 .dl-hbar-list { display: flex; flex-direction: column; gap: 9px; }
 .dl-hbar-row  { display: flex; align-items: center; gap: 8px; }
@@ -527,7 +697,7 @@
 .dl-btn-ver {
   flex: 1;
   padding: 7px 0;
-  background: var(--bcp-blue);
+  background: #ff6000;
   color: white;
   border: none;
   border-radius: 7px;
@@ -1052,4 +1222,58 @@
   flex: 1;
   height: 100vh; /* CLAVE */
   overflow-y: auto; /* SOLO aquí hay scroll */
+}
+
+
+
+
+
+/* ════════ ELIMINAR FOCO NARANJA GLOBAL SEARCH ════════ */
+
+/* evita cualquier outline del navegador */
+.dl-fav-search,
+.dl-fav-search:focus,
+.dl-fav-search:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* el wrapper NO debe heredar foco naranja */
+.dl-fav-search-wrap {
+  border: 1.5px solid #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+/* SOLO estilo controlado (azul BCP) */
+.dl-fav-search-wrap:focus-within {
+  border-color: var(--bcp-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0, 61, 165, 0.10) !important;
+}
+*:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 768px) {
+  .cat-search::placeholder {
+    content: "Buscar...";
+  }
+}
+@media (max-width: 768px) {
+  .cat-btn-filtrar {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .cat-btn-text {
+    display: none;
+  }
+
+  .cat-btn-filtrar svg {
+    margin: 0;
+  }
 }

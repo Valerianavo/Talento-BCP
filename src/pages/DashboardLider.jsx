@@ -20,7 +20,7 @@ import { MdBolt } from "react-icons/md";
 import { HiOutlineBriefcase, HiOutlineOfficeBuilding } from "react-icons/hi";
 import { RiTeamLine } from "react-icons/ri";
 import { IoSearchOutline } from "react-icons/io5";
-
+import logo from "../images/LogoBCP.png";
 /* ── helpers ── */
 const calcComp = (p) => {
   const c = [
@@ -217,7 +217,11 @@ function DashboardLider() {
         aria-label="Menú de navegación del dashboard"
       >
         <div className="dl-sidebar-logo">
-          <div className="dl-logo-icon">B</div>
+          <img
+            src={logo}
+            alt="Talento BCP"
+            className="dl-logo-icon"
+          />
           <span className="dl-logo-text">Talento BCP</span>
         </div>
 

@@ -212,7 +212,10 @@ function Catalogo() {
           <IoSearchOutline className="cat-search-icon" size={17}/>
           <input
             className="cat-search"
-            placeholder="Buscar por nombre, rol, skills, área..."
+            placeholder={window.innerWidth < 768 
+              ? "Buscar por nombre..." 
+              : "Buscar por nombre, rol, skills, área..."
+            }
             value={filtros.busqueda}
             onChange={(e) => setFiltros({ ...filtros, busqueda: e.target.value })}
           />
@@ -227,8 +230,11 @@ function Catalogo() {
           onClick={() => setPanelAbierto((v) => !v)}
         >
           <FiSliders size={15}/>
-          Filtrar
-          {cantFiltros > 0 && <span className="cat-filtro-count">{cantFiltros}</span>}
+          <span className="cat-btn-text">Filtrar</span>
+
+          {cantFiltros > 0 && (
+            <span className="cat-filtro-count">{cantFiltros}</span>
+          )}
         </button>
       </div>
 

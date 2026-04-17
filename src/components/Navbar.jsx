@@ -20,41 +20,49 @@ function Navbar() {
 
   const cerrar = () => setMenuAbierto(false);
 
-  const links = (
+    const links = (
     <>
       <Link to="/" className="nav-link" onClick={cerrar}>
-        <FaHome className="icon-btn" /> Inicio
+        <FaHome className="icon-btn" />
+        <span>Inicio</span>
       </Link>
 
       {user && (
         <Link to="/catalogo" className="nav-link" onClick={cerrar}>
-          <FaUsers className="icon-btn" /> Buscar Talento
+          <FaUsers className="icon-btn" />
+          <span>Buscar Talento</span>
         </Link>
       )}
-      {/* <Link to="/catalogo" className="nav-link" onClick={cerrar}>
-        <FaUsers className="icon-btn" /> Buscar Talento
-      </Link> */}
 
       {!cargando && (
         <>
           {user ? (
             <>
               {rol === "lider" ? (
-                <Link to="/dashboard-lider" className="nav-link nav-highlight" onClick={cerrar}>
-                  <FaChartBar className="icon-btn" /> Dashboard
+                <Link
+                  to="/dashboard-lider"
+                  className="nav-link nav-highlight"
+                  onClick={cerrar}
+                >
+                  <FaChartBar className="icon-btn" />
+                  <span>Dashboard</span>
                 </Link>
               ) : (
                 <Link to="/perfil" className="nav-link" onClick={cerrar}>
-                  <FaUser className="icon-btn" /> Mi perfil
+                  <FaUser className="icon-btn" />
+                  <span>Mi perfil</span>
                 </Link>
               )}
+
               <button className="nav-link nav-logout" onClick={cerrarSesion}>
-                <FaSignOutAlt className="icon-btn" /> Salir
+                <FaSignOutAlt className="icon-btn" />
+                <span>Salir</span>
               </button>
             </>
           ) : (
             <Link to="/auth" className="nav-link" onClick={cerrar}>
-              <FaUser className="icon-btn" /> Iniciar sesión
+              <FaUser className="icon-btn" />
+              <span>Iniciar sesión</span>
             </Link>
           )}
         </>
@@ -62,33 +70,46 @@ function Navbar() {
     </>
   );
 
-  return (
+
+ return (
     <nav className="navbar-custom">
-      <div className="logo-container" onClick={() => { cerrar(); navigate("/"); }}>
+
+      {/* LOGO */}
+      <div
+        className="logo-container"
+        onClick={() => { cerrar(); navigate("/"); }}
+      >
         <img src={logoBCP} alt="BCP" className="logo-img" />
         <span className="logo-text">| Talento BCP</span>
       </div>
 
-      {/* Desktop */}
+      {/* DESKTOP MENU */}
       <div className="nav-actions">{links}</div>
 
-      {/* Mobile hamburger */}
+      {/* HAMBURGER (SOLO MOBILE/TABLET) */}
       <button
         className={`nav-hamburger ${menuAbierto ? "open" : ""}`}
-        onClick={() => setMenuAbierto((v) => !v)}
+        onClick={() => setMenuAbierto(v => !v)}
         aria-label="Menú"
       >
         <span /><span /><span />
       </button>
 
+      {/* MOBILE MENU */}
       {menuAbierto && (
         <>
           <div className="nav-mobile-overlay" onClick={cerrar} />
-          <div className="nav-mobile-menu">{links}</div>
+
+          <div className="nav-mobile-menu">
+            <button className="nav-close" onClick={cerrar}>✕</button>
+            {links}
+          </div>
         </>
       )}
+
     </nav>
   );
+
 }
 
 export default Navbar;
