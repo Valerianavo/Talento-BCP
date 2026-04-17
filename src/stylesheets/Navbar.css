@@ -191,3 +191,32 @@
 
 @keyframes fadeIn      { from { opacity: 0 } to { opacity: 1 } }
 @keyframes slideInRight { from { transform: translateX(100%) } to { transform: none } }
+
+/* ═══════════════════════════════════
+   BADGE DE FAVORITOS EN NAVBAR
+   Usable con: <Link to="/dashboard-lider" className="nav-fav-badge">
+═══════════════════════════════════ */
+.nav-fav-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fff8e6;
+  color: #d97706;
+  border: 1.5px solid #fde68a;
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s;
+  min-height: 36px;
+}
+.nav-fav-badge:hover { background: #fef3c7; color: #b45309; }
+.nav-fav-num { font-weight: 800; }
+
+/* Para el mobile menu también */
+@media (max-width: 700px) {
+  .nav-fav-badge { width: 100%; justify-content: flex-start; border-radius: 0; background: none; border: none; border-bottom: 1px solid #f0f0f0; padding: 12px 0; color: #d97706; font-size: 16px; }
+}

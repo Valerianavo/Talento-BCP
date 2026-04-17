@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, auth } from "../firebase/firebase";
+import { db, auth } from "../firebase/firebase.js";
 import { signOut } from "firebase/auth";
 import {
   collection, query, where, getDocs,
   doc, getDoc, updateDoc, arrayRemove,
   addDoc, serverTimestamp, deleteDoc,
 } from "firebase/firestore";
-import { useRol } from "../hooks/useRol";
+import { useRol } from "../hooks/useRol.js";
 import Navbar from "../components/Navbar.jsx";
 import "../stylesheets/DashboardLider.css";
 
@@ -120,6 +120,7 @@ function DashboardLider() {
   const [cargando,     setCargando]     = useState(true);
   const [tabActiva,    setTabActiva]    = useState("metricas");
   const [busqFav,      setBusqFav]      = useState("");
+  const [sidebarOpen,  setSidebarOpen]  = useState(false);
   const [modalVacante, setModalVacante] = useState(false);
   const [vacanteEdit,  setVacanteEdit]  = useState(null);
 
@@ -201,8 +202,20 @@ function DashboardLider() {
   return (
     <div className="dl-wrapper">
 
+      {/* ── Overlay mobile sidebar ── */}
+      {sidebarOpen && (
+        <div
+          className="dl-sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* ── SIDEBAR ── */}
-      <aside className="dl-sidebar">
+      <aside
+        className={`dl-sidebar ${sidebarOpen ? "dl-sidebar-open" : ""}`}
+        aria-label="Menú de navegación del dashboard"
+      >
         <div className="dl-sidebar-logo">
           <div className="dl-logo-icon">B</div>
           <span className="dl-logo-text">Talento BCP</span>
@@ -246,6 +259,15 @@ function DashboardLider() {
       {/* ── MAIN ── */}
       <main className="dl-main">
         <div className="dl-topbar">
+          {/* Hamburger mobile */}
+          <button
+            className="dl-hamburger"
+            onClick={() => setSidebarOpen((v) => !v)}
+            aria-label="Abrir menú"
+            aria-expanded={sidebarOpen}
+          >
+            <span/><span/><span/>
+          </button>
           <div>
             <h1 className="dl-topbar-titulo">
               {tabActiva==="metricas" ? "Métricas de Talento" : tabActiva==="favoritos" ? "Mis Favoritos" : " "}

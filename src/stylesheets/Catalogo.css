@@ -135,27 +135,30 @@ body { font-family:var(--f); background:var(--g100); color:var(--g700); }
   overflow:hidden;
 }
 
-/* mobile drawer */
+/* ── Filtro como modal bottom-sheet en mobile ── */
 @media(max-width:900px) {
   .filtros-overlay {
-    position:fixed; inset:0; background:rgba(0,0,0,.42);
-    z-index:200; animation:fadeIn .2s;
+    position:fixed; inset:0; background:rgba(0,0,0,.48);
+    z-index:200; animation:fadeIn .2s; backdrop-filter:blur(2px);
   }
   .filtros-panel {
     position:fixed;
-    top:0; right:-110%; bottom:0;
-    width:min(310px,88vw);
-    z-index:201; border-radius:0; max-height:100vh;
-    transition:right .3s ease;
+    bottom:-110%; left:0; right:0;
+    width:100%;
+    max-height:88vh;
+    z-index:201;
+    border-radius:16px 16px 0 0;
+    transition:bottom .35s cubic-bezier(.4,0,.2,1);
+    top:auto;
   }
-  .filtros-panel-open { right:0 !important; }
+  .filtros-panel-open { bottom:0 !important; }
 }
 @media(min-width:901px) {
-  .filtros-overlay   { display:none; }
-  .filtros-x-btn     { display:none; }
+  .filtros-overlay       { display:none; }
+  .filtros-x-btn         { display:none; }
   .filtros-footer-mobile { display:none; }
-  .filtros-panel-open { right:auto !important; }
-  .cat-btn-filtrar   { display:none; }
+  .filtros-panel-open    { bottom:auto !important; }
+  .cat-btn-filtrar       { display:none; }
 }
 
 .filtros-header {

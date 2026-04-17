@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { db, auth } from "../firebase/firebase";
+import { db, auth } from "../firebase/firebase.js";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, where, getDocs, updateDoc, doc } from "firebase/firestore";
 import Swal from "sweetalert2";
@@ -148,15 +148,8 @@ function Perfil() {
 
         {/* ══ SIDEBAR ══ */}
         <aside className="perfil-sidebar">
-          <div className="sidebar-card completitud-card">
-            <h6 className="sidebar-titulo">COMPLETITUD DEL PERFIL</h6>
-            <div className="barra-progreso-wrapper">
-              <div className="barra-progreso-fill" style={{ width:`${comp}%` }} />
-            </div>
-            <span className="completitud-numero">{comp}%</span>
-            {comp < 100 && <p className="completitud-tip">Completa tu perfil para aparecer en el catálogo</p>}
-            {comp === 100 && <p className="completitud-tip completitud-ok">¡Perfil al 100%!</p>}
-          </div>
+          {/* completitud card legacy — oculta via CSS, el FAB la reemplaza */}
+          <div className="sidebar-card completitud-card" aria-hidden="true"/>
 
           <div className="sidebar-card">
             <div className="sidebar-card-header">
@@ -386,6 +379,26 @@ function Perfil() {
             )}
           </SeccionCard>
         </main>
+      </div>
+
+      {/* ══ COMPLETITUD FAB ══ */}
+      <div
+        className="completitud-fab"
+        role="status"
+        aria-label={`Completitud del perfil: ${comp}%`}
+        aria-live="polite"
+      >
+        <div className="completitud-fab-header">
+          <span className="completitud-fab-label">Perfil completado</span>
+          <span className="completitud-fab-num">{comp}%</span>
+        </div>
+        <div className="completitud-fab-bar" aria-hidden="true">
+          <div className="completitud-fab-fill" style={{ width:`${comp}%` }} />
+        </div>
+        {comp < 100
+          ? <p className="completitud-fab-tip">Añade más datos para aumentar tu visibilidad</p>
+          : <p className="completitud-fab-tip completitud-fab-ok">¡Perfil al 100% · Máxima visibilidad!</p>
+        }
       </div>
 
       {/* ══ MODALES ══ */}
