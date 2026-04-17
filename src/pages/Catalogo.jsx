@@ -23,18 +23,7 @@ import { IoSearchOutline } from "react-icons/io5";
 import { RiTeamLine } from "react-icons/ri";
 import { AiOutlineSafety } from "react-icons/ai";
 import { FaLinkedin, FaGithub } from "react-icons/fa";
-
-/* ── helpers ── */
-const calcComp = (p) => {
-  const c = [
-    p.titulo, p.resumen, p.area, p.intereses,
-    p.telefono, p.distrito || p.ciudad,
-    p.experiencia?.length > 0, p.educacion?.length > 0,
-    p.idiomas?.length > 0, p.cursos?.length > 0,
-    p.skills?.length > 0, p.habilidadesBlandas?.length > 0,
-  ];
-  return Math.round(c.filter(Boolean).length / c.length * 100);
-};
+import { calcCompletitud } from "./Perfil";
 
 const MESES_MAP = {
   Enero:0,Febrero:1,Marzo:2,Abril:3,Mayo:4,Junio:5,
@@ -97,7 +86,7 @@ function Catalogo() {
       try {
         const snap = await getDocs(collection(db, "practicantes"));
         setPerfiles(snap.docs.map((d) => ({
-          id: d.id, ...d.data(), completitud: calcComp(d.data()),
+          id: d.id, ...d.data(), completitud: calcCompletitud(d.data()),
         })));
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
@@ -124,7 +113,7 @@ function Catalogo() {
     const txt = filtros.busqueda.toLowerCase().trim();
     return perfiles
       .filter((p) => {
-        if (p.completitud < 40) return false;
+        if (p.completitud < 70) return false; 
 
         if (txt) {
           const hay = [
