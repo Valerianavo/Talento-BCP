@@ -11,7 +11,6 @@ import Navbar from "./components/Navbar";
 
 function Layout() {
   const location = useLocation();
-
   const hideLayout = location.pathname === "/auth";
 
   return (
