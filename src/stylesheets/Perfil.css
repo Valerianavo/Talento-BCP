@@ -41,15 +41,28 @@ body {
 }
 
 
-  /* botón volver */
+/* botón volver */
 .pub-btn-volver {
-  display: inline-flex; align-items: center; gap: 6px;
-  background: none; border: 1.5px solid var(--g200); border-radius: 8px;
-  padding: 7px 14px; font-size: 13px; font-weight: 600; color: var(--azul);
-  cursor: pointer; margin-bottom: 16px; transition: background .15s, border-color .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 1.5px solid var(--g200);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--azul);
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: background .15s, border-color .15s;
   font-family: var(--f);
 }
-.pub-btn-volver:hover { background: var(--azul-s); border-color: var(--azul); }
+
+.pub-btn-volver:hover {
+  background: var(--azul-s);
+  border-color: var(--azul);
+}
 
 
 @keyframes fadeIn {
@@ -381,6 +394,7 @@ body {
    y como barra top en mobile
 ═══════════════════════════════════════════ */
 .completitud-fab {
+  display: none;
   position: fixed;
   bottom: 24px;
   right: 24px;
@@ -404,6 +418,8 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 7px;
+  gap: 6px;
+  margin: 0;
 }
 
 .completitud-fab-label {
@@ -440,6 +456,7 @@ body {
   font-size: .71rem;
   color: var(--g500);
   line-height: 1.4;
+  margin: 0;
 }
 
 .completitud-fab-ok {
@@ -449,9 +466,42 @@ body {
 
 
 
-/* Ocultar la sidebar card de completitud (se usa solo el FAB) */
-.completitud-card {
-  display: none;
+/* completitud */
+.completitud-cad {
+  border-top: 3px solid var(--naranja);
+}
+
+.barra-progreso-wrapper {
+  height: 8px;
+  background: var(--g200);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.barra-progreso-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--azul), var(--naranja));
+  border-radius: 4px;
+  transition: width .6s ease;
+}
+
+.completitud-numero {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--azul);
+}
+
+.completitud-tip {
+  font-size: .78rem;
+  color: var(--g500);
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+.completitud-ok {
+  color: var(--verde) !important;
+  font-weight: 600;
 }
 
 /* tips */
@@ -2485,6 +2535,10 @@ body {
 
 /* ───────── MOBILE GRANDE ───────── */
 @media (max-width: 768px) {
+  .completitud-cad {
+    display: none;
+  }
+
 
   /* layout general */
   .perfil-container {

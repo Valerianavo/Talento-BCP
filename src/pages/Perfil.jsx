@@ -149,7 +149,15 @@ function Perfil() {
         {/* ══ SIDEBAR ══ */}
         <aside className="perfil-sidebar">
           {/* completitud card legacy — oculta via CSS, el FAB la reemplaza */}
-          <div className="sidebar-card completitud-card" aria-hidden="true"/>
+          <div className="sidebar-card completitud-cad">
+            <h6 className="sidebar-titulo">COMPLETITUD DEL PERFIL</h6>
+            <div className="barra-progreso-wrapper">
+              <div className="barra-progreso-fill" style={{ width:`${comp}%` }} />
+            </div>
+            <span className="completitud-numero">{comp}%</span>
+            {comp < 100 && <p className="completitud-tip">Completa tu perfil al 70% para aparecer en el catálogo</p>}
+            {comp === 100 && <p className="completitud-tip completitud-ok">¡Perfil al 100%!</p>}
+          </div>
 
           <div className="sidebar-card">
             <div className="sidebar-card-header">
@@ -396,7 +404,7 @@ function Perfil() {
           <div className="completitud-fab-fill" style={{ width:`${comp}%` }} />
         </div>
         {comp < 100
-          ? <p className="completitud-fab-tip">Añade más datos para aumentar tu visibilidad</p>
+          ? <p className="completitud-fab-tip">Añade tus datos hasta un 70% para aparecer en el catalogo.</p>
           : <p className="completitud-fab-tip completitud-fab-ok">¡Perfil al 100% · Máxima visibilidad!</p>
         }
       </div>
