@@ -7,6 +7,7 @@ import Perfil         from "./pages/Perfil";
 import PerfilPublico  from "./pages/PerfilPublico";
 import DashboardLider from "./pages/DashboardLider";
 
+
 import Navbar from "./components/Navbar";
 import Chatbot from "./components/Chatbot";
 
