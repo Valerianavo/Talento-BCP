@@ -12,16 +12,8 @@ import "../stylesheets/Auth.css";
 import { FiUser, FiMail, FiLock, FiArrowLeft, FiAlertCircle } from "react-icons/fi";
 import logo from "../images/LogoBCP.png";
 /*
-  REGLAS DE ACCESO
- ─────────────────────────────────────────────────────────
-  · Registro    - SOLO crea cuenta de practicante.
-                  Los líderes NUNCA se auto-registran.
-                  Administración los inserta en Firestore.
-
-  · Login     - El sistema consulta Firestore:
-                    uid en "lideres"      → /dashboard-lider
-                    uid en "practicantes" → /perfil
-
+  Registro - SOLO crea cuenta de practicante.
+  Login - El sistema consulta Firestore
     El rol se detecta automáticamente al iniciar sesión.
 */
 
@@ -32,7 +24,7 @@ async function detectarRolYRedirigir(uid, navigate) {
     query(collection(db, "lideres"), where("uid", "==", uid))
   );
   if (!lSnap.empty) {
-    navigate("/dashboard-lider");
+    navigate("/catalogo");
     return;
   }
   /* Por defecto → practicante */
