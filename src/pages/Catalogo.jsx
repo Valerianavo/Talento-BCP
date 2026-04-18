@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { db, auth } from "../firebase/firebase";
 import {
   collection, getDocs, doc, getDoc,
@@ -12,7 +12,7 @@ import "../stylesheets/Catalogo.css";
 
 import {
   FiMapPin, FiStar, FiMail, FiPhone, FiArrowLeft,
-  FiExternalLink, FiX, FiSliders,
+  FiExternalLink, FiX, FiSliders, FiMic, FiMicOff,
 } from "react-icons/fi";
 import {
   MdSchool, MdRocketLaunch, MdBolt, MdMenuBook,
@@ -79,6 +79,10 @@ function Catalogo() {
   const [perfilModal,  setPerfilModal]  = useState(null);
   const [loadingModal, setLoadingModal] = useState(false);
 
+  // ── VOZ ──
+  const [escuchando, setEscuchando] = useState(false);
+  const reconocimientoRef = useRef(null);
+
   /* cargar perfiles */
   useEffect(() => {
     const cargar = async () => {
@@ -108,57 +112,69 @@ function Catalogo() {
   }, [perfiles]);
 
   /* FILTRADO */
-  const filtrados = useMemo(() => {
-    const txt = filtros.busqueda.toLowerCase().trim();
-    return perfiles
-      .filter((p) => {
-        if (p.completitud < 70) return false; 
+const filtrados = useMemo(() => {
+  const normalizar = (s) =>
+    (s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-        if (txt) {
-          const hay = [
-            p.nombre, p.titulo, p.area, p.intereses, p.distrito, p.ciudad, p.pais,
-            ...(p.skills || []), ...(p.habilidadesBlandas || []),
-            ...(p.rotaciones || []).map((r) => `${r.area} ${r.logros || ""}`),
-          ].filter(Boolean).join(" ").toLowerCase();
-          if (!hay.includes(txt)) return false;
-        }
+  const palabras = normalizar(filtros.busqueda).split(/\s+/).filter(Boolean);
 
-        if (filtros.areas?.length > 0) {
-          const todasAreas = [p.area, ...(p.rotaciones || []).map((r) => r.area)].filter(Boolean);
-          if (!filtros.areas.some((a) => todasAreas.includes(a))) return false;
-        }
+  return perfiles
+    .filter((p) => {
+      if (p.completitud < 70) return false;
 
-        if (filtros.skills.length > 0) {
-          const sp = [...(p.skills || []), ...(p.habilidadesBlandas || [])].map((s) => s.trim().toLowerCase());
-          if (!filtros.skills.some((s) => sp.includes(s.toLowerCase()))) return false;
-        }
+      //BÚSQUEDA POR TEXTO / VOZ
+      if (palabras.length > 0) {
+        const hay = [
+          p.nombre, p.apellidos, p.titulo, p.area, p.intereses,
+          p.distrito, p.ciudad, p.pais, p.resumen,
+          ...(p.skills || []),
+          ...(p.habilidadesBlandas || []),
+          ...(p.idiomas || []).map((i) => i.idioma || i),
+          ...(p.educacion || []).map((e) => `${e.institucion || ""} ${e.carrera || ""} ${e.nivel || ""}`),
+          ...(p.rotaciones || []).map((r) => `${r.area || ""} ${r.logros || ""}`),
+          ...(p.experiencia || []).map((e) => `${e.cargo || ""} ${e.empresa || ""} ${e.funciones || ""}`),
+          ...(p.proyectos || []).map((pr) => `${pr.nombre || ""} ${pr.descripcion || ""}`),
+        ].filter(Boolean).map(normalizar).join(" ");
 
-        if (filtros.idiomas.length > 0) {
-          const ip = (p.idiomas || []).map((i) => (i.idioma || i).toLowerCase());
-          if (!filtros.idiomas.some((i) => ip.includes(i.toLowerCase()))) return false;
-        }
+        if (!palabras.some((pal) => hay.includes(pal))) return false;
+      }
 
-        if (filtros.nivelEducacion.length > 0) {
-          const np = (p.educacion || []).map((e) => e.nivel);
-          if (!filtros.nivelEducacion.some((n) => np.includes(n))) return false;
-        }
+      if (filtros.areas?.length > 0) {
+        const todasAreas = [p.area, ...(p.rotaciones || []).map((r) => r.area)].filter(Boolean);
+        if (!filtros.areas.some((a) => todasAreas.includes(a))) return false;
+      }
 
-        if (filtros.ubicaciones.length > 0) {
-          const ubic = [p.ciudad, p.distrito, p.pais].filter(Boolean).join(" ").toLowerCase();
-          if (!filtros.ubicaciones.some((u) => ubic.includes(u.toLowerCase()))) return false;
-        }
+      if (filtros.skills.length > 0) {
+        const sp = [...(p.skills || []), ...(p.habilidadesBlandas || [])].map((s) => normalizar(s));
+        if (!filtros.skills.some((s) => sp.includes(normalizar(s)))) return false;
+      }
 
-        if (filtros.rangosExp?.length > 0) {
-          const rango = rangoExp(calcMesesExp(p.experiencia)) || "Sin experiencia";
-          if (!filtros.rangosExp.includes(rango)) return false;
-        }
+      if (filtros.idiomas.length > 0) {
+        const ip = (p.idiomas || []).map((i) => normalizar(i.idioma || i));
+        if (!filtros.idiomas.some((i) => ip.includes(normalizar(i)))) return false;
+      }
 
-        if (filtros.soloFavoritos && !favIds.includes(p.id)) return false;
-        if (filtros.soloConProyectos && !(p.proyectos?.length > 0)) return false;
+      if (filtros.nivelEducacion.length > 0) {
+        const np = (p.educacion || []).map((e) => e.nivel);
+        if (!filtros.nivelEducacion.some((n) => np.includes(n))) return false;
+      }
 
-        return true;
-      })
-      .sort((a, b) => b.completitud - a.completitud);
+      if (filtros.ubicaciones.length > 0) {
+        const ubic = normalizar([p.ciudad, p.distrito, p.pais].filter(Boolean).join(" "));
+        if (!filtros.ubicaciones.some((u) => ubic.includes(normalizar(u)))) return false;
+      }
+
+      if (filtros.rangosExp?.length > 0) {
+        const rango = rangoExp(calcMesesExp(p.experiencia)) || "Sin experiencia";
+        if (!filtros.rangosExp.includes(rango)) return false;
+      }
+
+      if (filtros.soloFavoritos && !favIds.includes(p.id)) return false;
+      if (filtros.soloConProyectos && !(p.proyectos?.length > 0)) return false;
+
+      return true;
+    })
+    .sort((a, b) => b.completitud - a.completitud);
   }, [perfiles, filtros, favIds]);
 
   /* modal */
@@ -185,6 +201,35 @@ function Catalogo() {
       await updateDoc(ref, { favoritos: arrayUnion(pid) });
       setFavIds((prev) => [...prev, pid]);
     }
+  };
+
+  /* voz */
+  const toggleVoz = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      alert("Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.");
+      return;
+    }
+    if (escuchando) {
+      reconocimientoRef.current?.stop();
+      setEscuchando(false);
+      return;
+    }
+    const rec = new SR();
+    rec.lang = "es-PE";
+    rec.interimResults = true;
+    rec.continuous = false;
+    rec.onresult = (e) => {
+    const raw = Array.from(e.results).map((r) => r[0].transcript).join("");
+    const normalizar = (s) =>
+      s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      setFiltros((prev) => ({ ...prev, busqueda: normalizar(raw) }));
+    };
+    rec.onerror = () => setEscuchando(false);
+    rec.onend   = () => setEscuchando(false);
+    reconocimientoRef.current = rec;
+    rec.start();
+    setEscuchando(true);
   };
 
   const cantFiltros =
@@ -224,6 +269,13 @@ function Catalogo() {
               <FiX size={14}/>
             </button>
           )}
+            <button
+              className={`cat-voz-btn ${escuchando ? "cat-voz-btn-on" : ""}`}
+              onClick={toggleVoz}
+             title={escuchando ? "Detener" : "Buscar por voz"}
+            >
+             {escuchando ? <FiMicOff size={15}/> : <FiMic size={15}/>}
+            </button>
         </div>
         <button
           className={`cat-btn-filtrar ${panelAbierto ? "cat-btn-filtrar-abierto" : ""} ${cantFiltros > 0 ? "cat-btn-filtrar-on" : ""}`}
