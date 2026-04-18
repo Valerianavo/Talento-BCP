@@ -8,6 +8,7 @@ import PerfilPublico  from "./pages/PerfilPublico";
 import DashboardLider from "./pages/DashboardLider";
 
 import Navbar from "./components/Navbar";
+import Chatbot from "./components/Chatbot";
 
 function Layout() {
   const location = useLocation();
@@ -25,6 +26,8 @@ function Layout() {
         <Route path="/perfil/:id"      element={<PerfilPublico />} />
         <Route path="/dashboard-lider" element={<DashboardLider />} />
       </Routes>
+
+      {!hideLayout && <Chatbot />}
     </>
   );
 }
