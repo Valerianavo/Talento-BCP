@@ -720,7 +720,7 @@ function TarjetaPracticante({ perfil, esFav, esLider, onToggleFav, onVerPerfil }
                 <div className="tc-info">
                     <div className="tc-nombre-row">
                         <h5 className="tc-nombre">{perfil.nombre}</h5>
-                        <IdChip id={perfil.id} clase="tc-id" />
+                        {esLider && <IdChip id={perfil.id} clase="tc-id" />}
                     </div>
                     <p className="tc-titulo">{perfil.titulo || "Sin título"}</p>
                     {ubicacion && <p className="tc-meta"><FiMapPin size={11} /> {ubicacion}</p>}
@@ -801,8 +801,8 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
                             <div className="mp-header-info">
                                 <div className="mp-nombre-row">
                                     <h3 className="mp-nombre">{perfil.nombre} {perfil.apellidos}</h3>
-                                    <IdChip id={perfil.id} clase="mp-id" />
-                                    {/* ⭐ solo líderes */}
+                                    {/*  solo líderes */}
+                                    {esLider && <IdChip id={perfil.id} clase="mp-id" />}
                                     {esLider && (
                                         <button className={`mp-fav-btn ${esFav ? "mp-fav-on" : ""}`} onClick={onToggleFav}>
                                             <FiStar size={13} style={{ marginRight: 4 }} />
