@@ -61,7 +61,7 @@
 
 /* ===== NAV ===== */
 .nav-link {
-  display: flex;
+  display: flex !important;
   align-items: center;
   gap: 6px;
   font-size: 14px;
