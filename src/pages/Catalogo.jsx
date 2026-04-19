@@ -1,9 +1,8 @@
-import { useEffect, useState, useMemo, useRef, useCallback  } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { db } from "../firebase/firebase";
 import {
     collection, getDocs, doc, getDoc,
     updateDoc, arrayUnion, arrayRemove,
-    query, where,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import Filtros from "./Filtros.jsx";
@@ -12,7 +11,7 @@ import "../stylesheets/Catalogo.css";
 
 import {
     FiMapPin, FiStar, FiMail, FiPhone, FiArrowLeft,
-    FiExternalLink, FiX, FiSliders,FiMic, FiMicOff,
+    FiExternalLink, FiX, FiSliders, FiMic, FiMicOff,
 } from "react-icons/fi";
 import {
     MdSchool, MdBolt, MdMenuBook,
@@ -94,8 +93,6 @@ const FILTROS_INIT = {
 
 /* ══════════════════════════════════════════
    CONSTRUIR TEXTO BUSCABLE DE UN PERFIL
-   Incluye absolutamente todo lo visible en la card
-   y en el perfil completo.
 ══════════════════════════════════════════ */
 const buildTextoPerfil = (p) =>
     [
@@ -110,25 +107,19 @@ const buildTextoPerfil = (p) =>
         p.pais,
         ...(p.skills || []),
         ...(p.habilidadesBlandas || []),
-        // idioma + nivel: "ingles avanzado", "frances nativo"
         ...(p.idiomas || []).map((i) => `${i.idioma || i} ${i.nivel || ""}`),
-        // educación: institución + carrera + nivel educativo
         ...(p.educacion || []).map((e) =>
             `${e.institucion || ""} ${e.carrera || ""} ${e.nivel || ""}`
         ),
-        // experiencia laboral: cargo + empresa + funciones
         ...(p.experiencia || []).map((e) =>
             `${e.cargo || ""} ${e.empresa || ""} ${e.funciones || ""}`
         ),
-        // rotaciones BCP: área + logros
         ...(p.rotaciones || []).map((r) =>
             `${r.area || ""} ${r.logros || ""}`
         ),
-        // proyectos: nombre + descripción + rol
         ...(p.proyectos || []).map((pr) =>
             `${pr.nombre || ""} ${pr.descripcion || ""} ${pr.rol || ""}`
         ),
-        // cursos y certificaciones
         ...(p.cursos || []).map((c) =>
             `${c.nombre || ""} ${c.institucion || ""}`
         ),
@@ -138,92 +129,162 @@ const buildTextoPerfil = (p) =>
         .join(" ");
 
 /* ══════════════════════════════════════════
-   BUSQQUEDA
+   BÚSQUEDA — STOP WORDS
+   ⚠️  NO incluir aquí palabras que también
+   sean skills/herramientas (excel, python…)
+   ni nombres de universidades o institutos.
 ══════════════════════════════════════════ */
-
 const STOP_WORDS = new Set([
-    // intención de búsqueda
-    "quiero", "busco", "necesito", "dame", "muestrame", "muéstrame",
-    "encuentra", "encontrar", "ver", "mostrar",
-    // artículos y preposiciones
+    // Intención y pedidos
+    "quiero", "busco", "necesito", "dame", "muestrame", "muestrame",
+    "encuentra", "encontrar", "ver", "mostrar", "pasame", "pasame",
+    "listame", "listame", "consigue", "ubica", "identifica",
+    // Artículos, preposiciones y conectores
     "un", "una", "unos", "unas", "el", "la", "los", "las",
     "de", "del", "en", "con", "que", "sea", "este", "esta",
-    "es", "se", "su", "sus", "por", "para", "a", "al",
+    "es", "se", "su", "sus", "por", "para", "al", "lo",
     "y", "o", "e", "ni", "pero", "sino", "aunque", "como",
-    "me", "mi", "nos", "tu", "hay", "también", "tambien",
-    "mas", "más", "muy", "bien", "bueno", "buena", "buen",
-    // palabras genéricas de RRHH sin valor de filtro
-    "practicante", "practicantes", "perfil", "persona", "alguien",
-    "conocimiento", "conocimientos", "habilidad", "habilidades",
-    "manejo", "sabe", "sepa", "tenga", "tiene",
-    // el nivel educativo lo normalizamos via alias, no como stop word
+    "me", "mi", "nos", "tu", "hay", "tambien", "tambien",
+    "mas", "muy", "bien", "bueno", "buena", "buen",
+    // Modismos y rellenos de búsqueda
+    "alguien", "persona", "perfil", "candidato", "candidata",
+    "talento", "postulante", "chico", "chica",
+    "algun", "alguna",
+    "venga", "este", "viviendo", "llamado",
+    // Palabras genéricas de RRHH
+    // ⚠️  "practicante/s" se mantienen como stop words
+    // pero NO "estudiante" porque puede ser útil
+    "practicante", "practicantes",
+    "conocimiento", "conocimientos",
+    "habilidad", "habilidades",
+    "manejo", "sabe", "sepa", "tenga",
+    "tiene", "domina", "dominio",
+    // ⚠️  "nivel", "carrera", "universidad", "facultad" eliminados
+    //     porque pueden aparecer en textos de perfiles reales
 ]);
 
-// Alias: normaliza lo que dice el usuario a tokens buscables en los datos
-// IMPORTANTE: las frases de 2+ palabras van primero para detectarlas antes
-// que sus partes individuales.
+/* ══════════════════════════════════════════
+   ALIAS_FRASES — frases de 2+ palabras primero
+══════════════════════════════════════════ */
 const ALIAS_FRASES = [
-    // frases de 2+ palabras — se evalúan primero
-    ["power bi",         "power bi"],
-    ["powerbi",          "power bi"],
-    ["san marcos",       "san marcos"],
-    ["data science",     "data science"],
-    ["machine learning", "machine learning"],
-    ["adobe xd",         "adobe xd"],
-    ["google analytics", "google analytics"],
-    ["r studio",         "r studio"],
-    ["diseño grafico",   "diseño grafico"],
-    ["diseño gráfico",   "diseño grafico"],
-    ["trabajo social",   "trabajo social"],
-    ["ciencias politicas","ciencias politicas"],
+    ["power bi",                "power bi"],
+    ["powerbi",                 "power bi"],
+    ["san marcos",              "san marcos"],
+    ["la molina",               "la molina"],
+    ["san pablo",               "san pablo"],
+    ["cesar vallejo",           "ucv"],
+    ["data science",            "data science"],
+    ["machine learning",        "machine learning"],
+    ["deep learning",           "deep learning"],
+    ["adobe xd",                "adobe xd"],
+    ["google analytics",        "google analytics"],
+    ["r studio",                "r studio"],
+    ["diseño grafico",          "diseño grafico"],
+    ["diseño grafico",          "diseño grafico"],
+    ["trabajo social",          "trabajo social"],
+    ["ciencias politicas",      "ciencias politicas"],
     ["ingenieria de sistemas",  "ingenieria de sistemas"],
     ["ingenieria de software",  "ingenieria de software"],
     ["ingenieria industrial",   "ingenieria industrial"],
     ["ingenieria civil",        "ingenieria civil"],
-    ["mas de 12",        "+12"],
-    ["más de 12",        "+12"],
-    ["mas de un año",    "+12"],
-    ["más de un año",    "+12"],
-    ["un año",           "+12"],
-    // nivel idioma
-    ["muy basico",       "muy basico"],
-    ["muy básico",       "muy basico"],
+    ["ingenieria electronica",  "ingenieria electronica"],
+    ["ingenieria mecanica",     "ingenieria mecanica"],
+    ["mas de 12",               "+12"],
+    ["mas de 12",               "+12"],
+    ["mas de un ano",           "+12"],
+    ["mas de un ano",           "+12"],
+    ["un ano",                  "+12"],
+    ["muy basico",              "muy basico"],
+    ["muy basico",              "muy basico"],
+    ["cayetano heredia",        "cayetano"],
+    ["santa maria",             "ucsm"],
 ];
 
+/* ══════════════════════════════════════════
+   ALIAS_PALABRAS — token único
+══════════════════════════════════════════ */
 const ALIAS_PALABRAS = {
-    // universidades
+    // ── Universidades nacionales ──
+    "unmsm":        "san marcos",
+    "marcos":       "san marcos",
+    "uni":          "uni",
+    "unalm":        "la molina",
+    "molina":       "la molina",
+    "unfv":         "villarreal",
+    "villarreal":   "villarreal",
+    "unjfsc":       "unjfsc",
+    "uncp":         "uncp",
+    "unh":          "unh",
+    "unsa":         "unsa",
+    "unap":         "unap",
+    "unsaac":       "unsaac",
+    "untrm":        "untrm",
+    "unc":          "unc",
+    "unj":          "unj",
+
+    // ── Universidades privadas ──
     "upc":          "upc",
     "pucp":         "pucp",
-    "pontificia":   "pontificia",
-    "unmsm":        "san marcos",
+    "pontificia":   "pucp",
     "ulima":        "ulima",
     "pacifico":     "pacifico",
     "continental":  "continental",
     "cayetano":     "cayetano",
-    "heredia":      "heredia",
+    "heredia":      "cayetano",
+    "upch":         "cayetano",
     "usil":         "usil",
-    "tecsup":       "tecsup",
-    "senati":       "senati",
-    "cibertec":     "cibertec",
     "utec":         "utec",
     "udep":         "udep",
     "esan":         "esan",
-    // niveles educativos
-    "egresado":     "egresado",
-    "egresada":     "egresado",
-    "bachiller":    "bachiller",
-    "titulado":     "titulado",
-    "titulada":     "titulado",
-    "universitario":"universitario",
-    "postgrado":    "postgrado",
-    "maestria":     "postgrado",
-    "magister":     "postgrado",
-    "doctorado":    "doctorado",
-    "tecnico":      "tecnico",
-    "instituto":    "tecnico",
-    "estudiante":   "curso",  
-    "cursando":     "curso",
-    // idiomas
+    "utp":          "utp",
+    "upn":          "upn",
+    "upeu":         "upeu",
+    "upt":          "upt",
+    "ucsp":         "ucsp",
+    "uancv":        "uancv",
+    "uladech":      "uladech",
+    "upao":         "upao",
+    "usat":         "usat",
+    "uss":          "uss",
+    "ucv":          "ucv",
+    "vallejo":      "ucv",
+    "ucsm":         "ucsm",
+    "udh":          "udh",
+    "udc":          "udc",
+    "uack":         "uack",
+    "scipade":      "scipade",
+
+    // ── Institutos técnicos ──
+    "tecsup":       "tecsup",
+    "senati":       "senati",
+    "cibertec":     "cibertec",
+    "idat":         "idat",
+    "certus":       "certus",
+    "toulouse":     "toulouse",
+    "sise":         "sise",
+    "khipu":        "khipu",
+    "franklin":     "franklin",
+    "britanico":    "britanico",
+    "iestp":        "iestp",
+    "iberotec":     "iberotec",
+    "isc":          "isc",
+
+    // ── Niveles educativos ──
+    "egresado":         "egresado",
+    "egresada":         "egresado",
+    "bachiller":        "bachiller",
+    "titulado":         "titulado",
+    "titulada":         "titulado",
+    "universitario":    "universitario",
+    "postgrado":        "postgrado",
+    "maestria":         "postgrado",
+    "magister":         "postgrado",
+    "doctorado":        "doctorado",
+    "tecnico":          "tecnico",
+    "instituto":        "instituto",
+    "cursando":         "curso",
+
+    // ── Idiomas ──
     "ingles":       "ingles",
     "english":      "ingles",
     "portugues":    "portugues",
@@ -231,31 +292,57 @@ const ALIAS_PALABRAS = {
     "aleman":       "aleman",
     "mandarin":     "mandarin",
     "chino":        "mandarin",
-    // niveles de idioma
+    "italiano":     "italiano",
+    "japones":      "japones",
+
+    // ── Niveles de idioma ──
     "nativo":       "nativo",
     "avanzado":     "avanzado",
     "intermedio":   "intermedio",
     "basico":       "basico",
-    // skills comunes
-    "excel":        "excel",
-    "python":       "python",
-    "sql":          "sql",
-    "javascript":   "javascript",
-    "react":        "react",
-    "tableau":      "tableau",
-    "figma":        "figma",
-    "photoshop":    "photoshop",
-    "illustrator":  "illustrator",
-    "aws":          "aws",
-    "azure":        "azure",
-    "scrum":        "scrum",
-    "agile":        "agile",
-    "git":          "git",
-    "java":         "java",
-    // experiencia
+
+    // ── Skills técnicos ──
+    // (Se mapean a sí mismos para pasar el filtro de longitud mínima
+    //  y confirmar que no son stop words)
+    "excel":            "excel",
+    "python":           "python",
+    "sql":              "sql",
+    "javascript":       "javascript",
+    "typescript":       "typescript",
+    "react":            "react",
+    "nodejs":           "nodejs",
+    "tableau":          "tableau",
+    "figma":            "figma",
+    "photoshop":        "photoshop",
+    "illustrator":      "illustrator",
+    "aws":              "aws",
+    "azure":            "azure",
+    "gcp":              "gcp",
+    "scrum":            "scrum",
+    "agile":            "agile",
+    "git":              "git",
+    "java":             "java",
+    "kotlin":           "kotlin",
+    "swift":            "swift",
+    "flutter":          "flutter",
+    "django":           "django",
+    "flask":            "flask",
+    "mongodb":          "mongodb",
+    "postgresql":       "postgresql",
+    "mysql":            "mysql",
+    "spark":            "spark",
+    "hadoop":           "hadoop",
+    "sap":              "sap",
+    "salesforce":       "salesforce",
+    "jira":             "jira",
+    "confluence":       "confluence",
+
+    // ── Experiencia ──
     "junior":       "junior",
     "senior":       "senior",
-    // áreas BCP
+    "trainee":      "trainee",
+
+    // ── Áreas BCP ──
     "tecnologia":   "tecnologia",
     "riesgos":      "riesgos",
     "operaciones":  "operaciones",
@@ -268,7 +355,12 @@ const ALIAS_PALABRAS = {
     "legal":        "legal",
     "auditoria":    "auditoria",
     "marketing":    "marketing",
-    // carreras genéricas
+    "cumplimiento": "cumplimiento",
+    "banca":        "banca",
+    "seguros":      "seguros",
+    "creditos":     "creditos",
+
+    // ── Carreras genéricas ──
     "antropologia":     "antropologia",
     "sistemas":         "sistemas",
     "software":         "software",
@@ -283,35 +375,61 @@ const ALIAS_PALABRAS = {
     "finanzas":         "finanzas",
     "negocios":         "negocios",
     "estadistica":      "estadistica",
-    "diseño":           "diseño",
+    "diseno":           "diseño",
     "gastronomia":      "gastronomia",
     "arquitectura":     "arquitectura",
+    "medicina":         "medicina",
+    "enfermeria":       "enfermeria",
+    "marketing":        "marketing",
+    "publicidad":       "publicidad",
+    "relaciones":       "relaciones",
+    "internacionales":  "internacionales",
+    "sociologia":       "sociologia",
+    "biologia":         "biologia",
+    "quimica":          "quimica",
+    "fisica":           "fisica",
+    "matematica":       "matematica",
+    "matematicas":      "matematica",
 };
 
+/* ══════════════════════════════════════════
+   EXTRAER TOKENS
+   Lógica: frases primero → luego palabras sueltas.
+   Una palabra que esté en ALIAS_PALABRAS siempre
+   se incluye; si no está, pasa si tiene ≥ 3 chars
+   y NO es stop word.
+══════════════════════════════════════════ */
 const extraerTokens = (texto) => {
     if (!texto.trim()) return [];
     let t = norm(texto);
     const tokens = [];
 
+    // 1) Detectar frases de 2+ palabras primero
     for (const [frase, alias] of ALIAS_FRASES) {
-        if (t.includes(norm(frase))) {
+        const fraseNorm = norm(frase);
+        if (t.includes(fraseNorm)) {
             tokens.push(alias);
-            t = t.replace(norm(frase), " "); 
+            t = t.replace(fraseNorm, " ");
         }
     }
 
+    // 2) Palabras sueltas restantes
     t.split(/\s+/).forEach((w) => {
         if (!w || w.length < 2) return;
-        if (STOP_WORDS.has(w)) return;
+
         const aliased = ALIAS_PALABRAS[w];
         if (aliased) {
+            // Está en alias → siempre incluir (aunque sea stop word genérica)
             tokens.push(aliased);
-        } else if (w.length >= 3) {
-            tokens.push(w);
+            return;
         }
+
+        // No está en alias → filtrar stop words y exigir ≥ 3 chars
+        if (STOP_WORDS.has(w)) return;
+        if (w.length >= 3) tokens.push(w);
     });
 
-    return [...new Set(tokens)]; // sin duplicados
+    return [...new Set(tokens)];
 };
 
 /* ══════════════════════════════════════════
@@ -334,7 +452,9 @@ function Catalogo() {
     const [escuchando, setEscuchando] = useState(false);
     const reconocimientoRef = useRef(null);
     const silencioTimerRef = useRef(null);
-    const transcFinalRef = useRef("");   // acumula texto final confirmado
+    const transcFinalRef = useRef("");
+    // ✅ FIX: usamos ref mutable para evitar stale closure en onend
+    const activoRef = useRef(false);
 
     /* cargar perfiles */
     useEffect(() => {
@@ -366,18 +486,15 @@ function Catalogo() {
 
     /* FILTRADO */
     const filtrados = useMemo(() => {
-        const txt = filtros.busqueda.toLowerCase().trim();
+        const tokens = extraerTokens(filtros.busqueda);
         return perfiles
             .filter((p) => {
                 if (p.completitud < 70) return false;
 
-                if (txt) {
-                    const hay = [
-                        p.nombre, p.titulo, p.area, p.intereses, p.distrito, p.ciudad, p.pais,
-                        ...(p.skills || []), ...(p.habilidadesBlandas || []),
-                        ...(p.rotaciones || []).map((r) => `${r.area} ${r.logros || ""}`),
-                    ].filter(Boolean).join(" ").toLowerCase();
-                    if (!hay.includes(txt)) return false;
+                if (tokens.length > 0) {
+                    const texto = buildTextoPerfil(p);
+                    const todasPresentes = tokens.every((token) => texto.includes(token));
+                    if (!todasPresentes) return false;
                 }
 
                 if (filtros.areas?.length > 0) {
@@ -385,24 +502,24 @@ function Catalogo() {
                     if (!filtros.areas.some((a) => todasAreas.includes(a))) return false;
                 }
 
-                if (filtros.skills.length > 0) {
-                    const sp = [...(p.skills || []), ...(p.habilidadesBlandas || [])].map((s) => s.trim().toLowerCase());
-                    if (!filtros.skills.some((s) => sp.includes(s.toLowerCase()))) return false;
+                if (filtros.skills?.length > 0) {
+                    const sp = [...(p.skills || []), ...(p.habilidadesBlandas || [])].map(norm);
+                    if (!filtros.skills.some((s) => sp.includes(norm(s)))) return false;
                 }
 
-                if (filtros.idiomas.length > 0) {
-                    const ip = (p.idiomas || []).map((i) => (i.idioma || i).toLowerCase());
-                    if (!filtros.idiomas.some((i) => ip.includes(i.toLowerCase()))) return false;
+                if (filtros.idiomas?.length > 0) {
+                    const ip = (p.idiomas || []).map((i) => norm(i.idioma || i));
+                    if (!filtros.idiomas.some((i) => ip.includes(norm(i)))) return false;
                 }
 
-                if (filtros.nivelEducacion.length > 0) {
+                if (filtros.nivelEducacion?.length > 0) {
                     const np = (p.educacion || []).map((e) => e.nivel);
                     if (!filtros.nivelEducacion.some((n) => np.includes(n))) return false;
                 }
 
-                if (filtros.ubicaciones.length > 0) {
-                    const ubic = [p.ciudad, p.distrito, p.pais].filter(Boolean).join(" ").toLowerCase();
-                    if (!filtros.ubicaciones.some((u) => ubic.includes(u.toLowerCase()))) return false;
+                if (filtros.ubicaciones?.length > 0) {
+                    const ubic = norm([p.ciudad, p.distrito, p.pais].filter(Boolean).join(" "));
+                    if (!filtros.ubicaciones.some((u) => ubic.includes(norm(u)))) return false;
                 }
 
                 if (filtros.rangosExp?.length > 0) {
@@ -444,14 +561,14 @@ function Catalogo() {
         }
     };
 
-    /* ── VOZ — comportamiento tipo Google ──────────────────
-         • interimResults: true  → texto aparece mientras habla
-         • continuous: true      → no corta tras primer silencio
-         • Se detiene solo tras 2.5 s de silencio
-         • O al presionar el botón otra vez
-      ─────────────────────────────────────────────────────── */
+    /* ── VOZ ──────────────────────────────────────────────────
+       ✅ FIX PRINCIPAL: activoRef evita el stale closure en onend.
+       El evento onend se crea una sola vez y captura el ref,
+       que siempre tiene el valor actualizado (true/false).
+    ──────────────────────────────────────────────────────────── */
     const detenerVoz = useCallback(() => {
         clearTimeout(silencioTimerRef.current);
+        activoRef.current = false;          // ✅ apagar flag antes de stop()
         try { reconocimientoRef.current?.stop(); } catch (_) { }
         reconocimientoRef.current = null;
         transcFinalRef.current = "";
@@ -467,7 +584,6 @@ function Catalogo() {
 
         if (escuchando) { detenerVoz(); return; }
 
-        // Resetear acumulador y limpiar búsqueda anterior
         transcFinalRef.current = "";
         setFiltros((prev) => ({ ...prev, busqueda: "" }));
 
@@ -479,7 +595,6 @@ function Catalogo() {
             rec.maxAlternatives = 1;
 
             rec.onresult = (e) => {
-                // Reiniciar timer de silencio con cada resultado
                 clearTimeout(silencioTimerRef.current);
 
                 let interim = "";
@@ -492,11 +607,10 @@ function Catalogo() {
                     }
                 }
 
-                // Mostrar en tiempo real: final confirmado + lo que va diciendo
                 const textoVivo = (transcFinalRef.current + interim).trim();
                 setFiltros((prev) => ({ ...prev, busqueda: textoVivo }));
 
-                // Silencio de 2.5 s → detener automáticamente
+                // 2.5 s de silencio → detener
                 silencioTimerRef.current = setTimeout(() => {
                     const textoFinal = transcFinalRef.current.trim() || textoVivo;
                     setFiltros((prev) => ({ ...prev, busqueda: textoFinal }));
@@ -505,19 +619,19 @@ function Catalogo() {
             };
 
             rec.onerror = (e) => {
-                // "no-speech" es normal, no hay que reportarlo
                 if (e.error !== "no-speech") console.error("Voz error:", e.error);
                 detenerVoz();
             };
 
-            // Si el navegador corta el stream solo (pasa en algunos Chrome),
-            // lo reiniciamos para mantener comportamiento continuo real.
+            // ✅ FIX: usa activoRef.current en lugar de la variable 'escuchando'
+            // que quedaría congelada en el closure con valor false.
             rec.onend = () => {
-                if (reconocimientoRef.current === rec && escuchando) {
+                if (activoRef.current && reconocimientoRef.current === rec) {
                     try { rec.start(); } catch (_) { }
                 }
             };
 
+            activoRef.current = true;       // ✅ marcar activo ANTES de start()
             reconocimientoRef.current = rec;
             rec.start();
         };
@@ -526,9 +640,10 @@ function Catalogo() {
         setEscuchando(true);
     }, [escuchando, detenerVoz]);
 
-    // Limpiar timer al desmontar componente
+    /* limpiar al desmontar */
     useEffect(() => () => {
         clearTimeout(silencioTimerRef.current);
+        activoRef.current = false;
         try { reconocimientoRef.current?.stop(); } catch (_) { }
     }, []);
 
@@ -565,12 +680,11 @@ function Catalogo() {
         <div className="pantalla-carga"><div className="spinner-bcp" /><p>Cargando talento...</p></div>
     );
 
-
     return (
         <div className="cat-wrapper">
 
             {/* TOPBAR */}
-             <div className="cat-topbar">
+            <div className="cat-topbar">
                 <div className="cat-search-wrap">
                     <IoSearchOutline className="cat-search-icon" size={17} />
                     <input
@@ -585,7 +699,6 @@ function Catalogo() {
                         value={filtros.busqueda}
                         onChange={(e) => setFiltros((prev) => ({ ...prev, busqueda: e.target.value }))}
                     />
-                    {/* X limpia búsqueda + TODOS los filtros del panel */}
                     {hayAlgoActivo && (
                         <button
                             className="cat-search-clear"
@@ -699,7 +812,6 @@ function TarjetaPracticante({ perfil, esFav, esLider, onToggleFav, onVerPerfil }
                 <div className="tc-comp-fill" style={{ width: `${perfil.completitud}%`, background: compColor }} />
             </div>
 
-            {/* Estrella solo para líderes */}
             {esLider && (
                 <button
                     className={`tc-fav ${esFav ? "tc-fav-on" : ""}`}
@@ -801,7 +913,6 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
                             <div className="mp-header-info">
                                 <div className="mp-nombre-row">
                                     <h3 className="mp-nombre">{perfil.nombre} {perfil.apellidos}</h3>
-                                    {/*  solo líderes */}
                                     {esLider && <IdChip id={perfil.id} clase="mp-id" />}
                                     {esLider && (
                                         <button className={`mp-fav-btn ${esFav ? "mp-fav-on" : ""}`} onClick={onToggleFav}>
@@ -830,7 +941,6 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
                                 <MpSeccion titulo="Contacto">
                                     {ubicacion && <MpDato Icon={FiMapPin} val={ubicacion} />}
                                     {perfil.telefono && <MpDato Icon={FiPhone} val={perfil.telefono} />}
-                                    {/* Email — solo líderes lo ven */}
                                     {esLider && perfil.email && <MpDato Icon={FiMail} val={perfil.email} />}
                                     {perfil.linkedin && (
                                         <a href={perfil.linkedin} target="_blank" rel="noopener noreferrer" className="mp-link">
@@ -885,7 +995,6 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
                                     </MpSeccion>
                                 )}
 
-                                {/* Documentos solo para líderes */}
                                 {esLider && perfil.documentos?.length > 0 && (
                                     <MpSeccion titulo="Documentos">
                                         {perfil.documentos.map((d, i) => (
@@ -995,7 +1104,6 @@ function ModalPerfil({ perfil, cargando, esFav, esLider, onToggleFav, onCerrar, 
                             <button className="mp-btn-volver-footer" onClick={onCerrar}>
                                 <FiArrowLeft size={14} style={{ marginRight: 5 }} />Volver
                             </button>
-                            {/* Contactar solo líderes */}
                             {esLider && perfil.email && (
                                 <a href={`mailto:${perfil.email}?subject=Oportunidad BCP`} className="mp-btn-contactar">
                                     <FiMail size={13} style={{ marginRight: 5 }} />Contactar
