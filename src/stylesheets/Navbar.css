@@ -5,8 +5,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 32px;
+  padding: 14px 32px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 400;
 }
 
 /* ===== LOGO ===== */
@@ -19,24 +22,44 @@
 
 .logo-img {
   width: 80px;
- 
   object-fit: contain;
 }
 
 .logo-text {
   font-size: 18px;
-  font-weight: 6;
+  font-weight: 200;
   color: #002abd;
 }
 
-/* ===== NAV LINKS ===== */
-.nav-actions {
+/* ===== NAV LINKS (desktop) ===== */
+/* ===== NAVBAR ===== */
+.navbar-custom {
+  background-color: #ffffff;
+  color: #002abd;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  padding: 14px 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 400;
 }
 
-/* ===== LINKS (YA NO BOTONES) ===== */
+/* ===== LOGO ===== */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.logo-img {
+  width: 80px;
+  object-fit: contain;
+}
+
+/* ===== NAV ===== */
 .nav-link {
   display: flex;
   align-items: center;
@@ -46,14 +69,29 @@
   text-decoration: none;
   opacity: 0.85;
   position: relative;
-  transition: 0.25s;
+  transition: all 0.25s ease;
 }
 
-.nav-link:hover {
-  opacity: 1;
+/* ICONOS */
+.icon-btn {
+  font-size: 13px;
+  transition: color 0.25s ease;
 }
 
-/* línea animada abajo */
+/* TEXTO GRADIENTE */
+.nav-link:hover span {
+  background: linear-gradient(90deg, #002abd, #ff5000);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ICONO NARANJA */
+.nav-link:hover .icon-btn {
+  color: #ff5000;
+}
+
+/* SUBRAYADO */
 .nav-link::after {
   content: "";
   position: absolute;
@@ -69,91 +107,97 @@
   width: 100%;
 }
 
-/* ===== ICONOS ===== */
-.icon-btn {
-  font-size: 13px;
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  flex-wrap: nowrap;   /* 👈 CLAVE */
+  white-space: nowrap; /* 👈 evita saltos raros */
 }
 
-/* ===== LINK ACTIVO / IMPORTANTE ===== */
-.nav-highlight {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 6px 12px;
-  border-radius: 6px;
+
+/* ===== HAMBURGER ===== */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
-/* ===== LOGOUT (más discreto) ===== */
-.nav-logout {
-  color: #ff5000;
+.nav-hamburger span {
+  width: 24px;
+  height: 2px;
+  background: #002abd;
+  transition: 0.25s;
 }
 
-.nav-logout:hover {
+/* animación X */
+.nav-hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ===== MOBILE MENU ===== */
+.nav-mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 900;
+}
+
+.nav-mobile-menu {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  background: #fff;
+  padding: 60px 20px 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  animation: dropDown 0.3s ease forwards;
+  z-index: 1000;
+}
+
+@keyframes dropDown {
+  from { transform: translateY(-100%); }
+  to { transform: translateY(0); }
+}
+
+/* X dentro menú */
+.nav-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 22px;
+  background: none;
+  border: none;
+  cursor: pointer;
   color: #002abd;
 }
 
-/* Hover texto con degradado */
-.nav-link:hover {
-  background: linear-gradient(90deg, #002A8D, #FF7800);
-
-  -webkit-background-clip: text; /* Chrome, Edge */
-  background-clip: text;         /* estándar */
-
-  -webkit-text-fill-color: transparent;
-  color: transparent;
-
-  opacity: 1;
-}
-
-/* Ícono NO con degradado → solo color */
-.nav-link:hover .icon-btn {
-  color: #FF7800; /* naranja BCP */
-}
-
-
-.nav-link,
-.nav-link .icon-btn {
-  transition: all 0.3s ease;
-}
-
-/* ========================= */
-/* 📱 NAVBAR RESPONSIVE */
-/* ========================= */
-@media (max-width: 768px) {
-
-
-
-  /* Navbar más compacto */
-  .navbar-custom {
-    padding: 12px 16px;
-  }
-
-  /* Contenedor de links */
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1024px) {
   .nav-actions {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-  }
-
-  /* 👇 Oculta SOLO texto (forma correcta) */
-  .link-text {
     display: none;
   }
 
-  /* Centra iconos */
-  .nav-link {
-    justify-content: center;
-    padding: 8px;
+  .nav-hamburger {
+    display: flex;
   }
-
-  /* Íconos más grandes */
-  .icon-btn {
-    font-size: 20px;
-  }
-
-}
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-radius: 10px;
-  transition: 0.2s;
 }

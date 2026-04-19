@@ -117,7 +117,6 @@
 /* nav */
 .dl-nav {
   display: flex;
-  flex-direction: column;
   gap: 2px;
   padding: 14px 12px;
   flex: 1;
@@ -130,9 +129,9 @@
   width: 100%;
   padding: 10px 12px;
   background: transparent;
-  border: none;
+  border: 2px solid var(--bcp-blue);
   border-radius: 8px;
-  color: rgba(255,255,255,0.7);
+  color:var(--bcp-blue-dk);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -146,17 +145,20 @@
 }
 .dl-nav-active {
   background: rgba(255,255,255,0.18) !important;
-  color: white !important;
-  font-weight: 700;
+  color: var(--bcp-blue-dk)!important;
+  font-weight: 900;
 }
 .dl-nav-badge {
-  margin-left: auto;
+  margin-left: 8px; 
   padding: 2px 7px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  color: white;
+  color: rgb(30, 16, 159);
+  white-space: nowrap; 
+  display: inline-block;
 }
+
 
 /* ════════ MAIN ════════ */
 .dl-main {
@@ -169,18 +171,19 @@
 /* topbar */
 .dl-topbar {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
   padding: 20px 28px 16px;
   background: white;
   border-bottom: 1px solid #e2e8f0;
   flex-shrink: 0;
-  gap: 16px;
+
 }
 .dl-topbar-titulo {
   font-size: 20px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--bcp-blue);
   margin: 0 0 2px;
 }
 .dl-topbar-sub {
@@ -1052,4 +1055,22 @@
   flex: 1;
   height: 100vh; /* CLAVE */
   overflow-y: auto; /* SOLO aquí hay scroll */
+}
+
+/* Estilos para Celulares de metricas y favoritos*/
+@media (max-width: 600px) {
+  .dl-topbar{
+    flex-direction: column; 
+    text-align: center;
+  }
+
+  .dl-nav {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dl-topbar-titulo {
+    font-size: 1.5rem;
+  }
+  
 }
