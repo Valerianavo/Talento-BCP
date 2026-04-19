@@ -388,3 +388,16 @@
     bottom: 14px;
   }
 }
+@media (max-width: 1024px) {
+  .cb-fab span {
+    display: none;
+  }
+
+  .cb-fab {
+    padding: 10px; 
+    border-radius: 50%; 
+    width: 45px;  
+    height: 45px;
+    justify-content: center;
+  }
+}
