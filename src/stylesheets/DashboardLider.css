@@ -1088,21 +1088,21 @@
 /* contenedor principal */
 .dl-wrapper {
   display: flex;
-  height: 100vh; /* CLAVE */
+  height: 100vh; 
   overflow: hidden;
 }
 
 /* sidebar */
 .dl-sidebar {
-  height: 100vh; /* CLAVE */
-  overflow: hidden; /* evita que crezca */
+  height: 100vh; 
+  overflow: hidden;
 }
 
 /* contenido principal */
 .dl-main {
   flex: 1;
-  height: 100vh; /* CLAVE */
-  overflow-y: auto; /* SOLO aquí hay scroll */
+  height: 100vh; 
+  overflow-y: auto; 
 }
 
 /* Estilos para Celulares de metricas y favoritos*/
