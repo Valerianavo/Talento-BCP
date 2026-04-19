@@ -320,7 +320,27 @@
   margin-bottom: 15px;
 }
 
+.auth-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
 
+.auth-field input {
+  width: 100%;
+  padding: 10px 40px 10px 35px;
+}
+
+.auth-eye {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #777;
+  display: flex;
+  align-items: center;
+}
 
 /* ════════════════════════════════
    RESPONSIVE

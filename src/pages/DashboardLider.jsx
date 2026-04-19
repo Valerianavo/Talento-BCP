@@ -372,7 +372,12 @@ function TarjetaFav({ p, onVer, onQuitar }) {
         )}
         <button className="dl-btn-quitar" onClick={onQuitar} title="Quitar de favoritos">✕</button>
       </div>
+      
     </div>
+
+
+
+
   );
 }
 

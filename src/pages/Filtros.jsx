@@ -401,7 +401,7 @@ function Filtros({
           </Grupo>
 
           {/* ── EXPERIENCIA ── */}
-          <Grupo titulo="Experiencia" badge={filtros.rangosExp?.length || 0}>
+          <Grupo titulo="Tiempo de experiencia" badge={filtros.rangosExp?.length || 0}>
             <p className="fg-hint">Rango de meses de experiencia total</p>
             <div className="fg-chips-wrap">
               {RANGOS_EXP.map((r) => (

@@ -16,6 +16,7 @@ import logo from "../images/LogoBCP.png";
   Login - El sistema consulta Firestore
     El rol se detecta automáticamente al iniciar sesión.
 */
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
 /* ── Consulta Firestore y redirige según rol ── */
 async function detectarRolYRedirigir(uid, navigate) {
@@ -114,14 +115,14 @@ function Auth() {
 
   const handleSubmit = () => modo === "registro" ? handleRegistro() : handleLogin();
   const onKey = (e) => { if (e.key === "Enter") handleSubmit(); };
-
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   return (
     <div className="auth-container">
 
       {/* ── IZQUIERDA ── */}
       <div className="auth-left">
         <div className="auth-left-content">
-<img src={logo} alt="Logo" className="auth-left-logo-img" />
+          <img src={logo} alt="Logo" className="auth-left-logo-img" />
           <h2>Talento BCP</h2>
           <p>
             {modo === "registro"
@@ -129,25 +130,7 @@ function Auth() {
               : "Accede a la plataforma de gestión de talento interno del BCP."}
           </p>
 
-          {/* <div className="auth-left-cards">
-            <div className="auth-left-card">
-              <span className="auth-left-card-icon">👤</span>
-              <div>
-                <strong>Practicantes</strong>
-                <p>Regístrate o inicia sesión con tus credenciales BCP.</p>
-              </div>
-            </div>
-            <div className="auth-left-card">
-              <span className="auth-left-card-icon">🏦</span>
-              <div>
-                <strong>Líderes BCP</strong>
-                <p>
-                  Inicia sesión con las credenciales asignadas por tu equipo.
-                  Serás redirigido automáticamente a tu panel de gestión.
-                </p>
-              </div>
-            </div>
-          </div> */}
+
         </div>
       </div>
 
@@ -209,13 +192,22 @@ function Auth() {
 
           <div className="auth-field">
             <FiLock className="auth-field-icon" size={15}/>
+
             <input
-              type="password"
+              type={mostrarPassword ? "text" : "password"}
               placeholder={modo === "registro" ? "Mínimo 6 caracteres" : "Contraseña"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={onKey}
             />
+
+            <button
+              type="button"
+              className="auth-eye"
+              onClick={() => setMostrarPassword(!mostrarPassword)}
+            >
+              {mostrarPassword ? <FiEyeOff size={16}/> : <FiEye size={16}/>}
+            </button>
           </div>
 
           <button

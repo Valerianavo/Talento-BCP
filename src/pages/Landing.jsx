@@ -46,7 +46,7 @@ function Landing() {
         <div className="container text-center">
           <h2>Impulsa tu talento</h2>
           <p>
-            Tu talento merece ser visto. Aquí podrás mostrar tus habilidades, explorar nuevas oportunidades y crecer dentro del banco en solo 3 simples pasos
+            Tus habilidades merecen ser vistas. Aquí podrás mostrarlas, explorar nuevas oportunidades y crecer dentro del banco en solo 3 simples pasos.
           </p>
         </div>
       </section>
@@ -154,7 +154,7 @@ function Landing() {
 
 
 
-
+              
       {/* FOOTER */}
       <footer className="footer">
         <p className="footer-text">

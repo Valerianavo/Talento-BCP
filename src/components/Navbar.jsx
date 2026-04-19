@@ -24,13 +24,13 @@ function Navbar() {
     <>
       <Link to="/" className="nav-link" onClick={cerrar}>
         <FaHome className="icon-btn" />
-        <span>Inicio</span>
+        <span> Inicio</span>
       </Link>
 
       {user && (
         <Link to="/catalogo" className="nav-link" onClick={cerrar}>
           <FaUsers className="icon-btn" />
-          <span>Buscar Talento</span>
+          <span> Buscar Talento</span>
         </Link>
       )}
 
@@ -45,24 +45,24 @@ function Navbar() {
                   onClick={cerrar}
                 >
                   <FaChartBar className="icon-btn" />
-                  <span>Dashboard</span>
+                  <span> Dashboard</span>
                 </Link>
               ) : (
                 <Link to="/perfil" className="nav-link" onClick={cerrar}>
                   <FaUser className="icon-btn" />
-                  <span>Mi perfil</span>
+                  <span> Mi perfil</span>
                 </Link>
               )}
 
               <button className="nav-link nav-logout" onClick={cerrarSesion}>
                 <FaSignOutAlt className="icon-btn" />
-                <span>Salir</span>
+                <span> Salir</span>
               </button>
             </>
           ) : (
             <Link to="/auth" className="nav-link" onClick={cerrar}>
               <FaUser className="icon-btn" />
-              <span>Iniciar sesión o Registrarse</span>
+              <span> Iniciar sesión / Registrarse</span>
             </Link>
           )}
         </>
