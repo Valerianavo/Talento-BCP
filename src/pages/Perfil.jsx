@@ -11,10 +11,12 @@ import {
   FiMapPin, FiPhone, FiMail, FiCalendar, FiLinkedin, FiGithub, FiExternalLink,
   FiSearch
 } from "react-icons/fi";
-import { MdWorkOutline, MdSchool, MdLanguage, MdMenuBook, MdRocketLaunch, MdBolt } from "react-icons/md";
+import { MdWorkOutline, MdSchool, MdLanguage, MdMenuBook, MdRocketLaunch, MdBolt, MdPsychology } from "react-icons/md";
 import { HiOutlineBriefcase } from "react-icons/hi";
 import { BsBuilding, BsTrophy, BsBank2 } from "react-icons/bs";
 import { TbCertificate, TbArrowsTransferDown } from "react-icons/tb";
+import { FiArrowRight } from "react-icons/fi";
+import TestPsicometrico from "../components/TestPsicometrico.jsx";
 
 /* ─── CONSTANTES ─── */
 const MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -72,6 +74,8 @@ function Perfil() {
   const [mCurso, setMCurso] = useState(false);
   const [mHab, setMHab] = useState(false);
   const [mRotacion, setMRotacion] = useState(false); // 🆕
+  const [mPsico, setMPsico] = useState(false);
+  const [psicoLocal, setPsicoLocal] = useState(null);
 
   /* modales editar */
   const [editExp, setEditExp] = useState(null);
@@ -87,6 +91,10 @@ function Perfil() {
       try {
         const snap = await getDocs(query(collection(db, "practicantes"), where("uid", "==", u.uid)));
         snap.forEach((d) => { setPerfil(d.data()); setDocId(d.id); });
+        const raw = localStorage.getItem(`estiloTrabajo_${u.uid}`);
+        if (raw) {
+          try { setPsicoLocal(JSON.parse(raw)); } catch { /* ignore */ }
+        }
       } catch (err) {
         Swal.fire({ icon: "error", title: "Error al cargar", text: err.message, confirmButtonColor: "#003DA5" });
       } finally { setCargando(false); }
@@ -203,6 +211,78 @@ function Perfil() {
               </>
             )}
           </div>
+
+          {/* ══ ESTILO DE TRABAJO (privado, solo localStorage) ══ */}
+          <button
+            className="psi-launcher"
+            onClick={() => setMPsico(true)}
+            title="Conoce tu estilo de trabajo"
+          >
+            <div className="psi-launcher-icon">
+              <MdPsychology size={22} />
+            </div>
+            <div className="psi-launcher-body">
+              <p className="psi-launcher-title">
+                {psicoLocal ? "Ver mi estilo de trabajo" : "Conoce tu estilo de trabajo"}
+              </p>
+              <p className="psi-launcher-sub">
+                {psicoLocal
+                  ? "Revisa tus resultados (privados)"
+                  : "Herramienta personal de autoconocimiento"}
+              </p>
+            </div>
+            {!psicoLocal
+              ? <span className="psi-launcher-badge">3 min</span>
+              : <FiArrowRight size={18} />
+            }
+          </button>
+
+          {psicoLocal && (
+            <div className="psi-mini">
+              <h6 className="psi-mini-titulo"><MdPsychology size={14} /> Mi estilo</h6>
+              <div className="psi-mini-habs">
+                <div className="psi-mini-hab">
+                  <span>Comunicación</span>
+                  <span className="psi-mini-hab-v">{psicoLocal.habilidades?.comunicacion}%</span>
+                </div>
+                <div className="psi-mini-hab">
+                  <span>Resolución</span>
+                  <span className="psi-mini-hab-v">{psicoLocal.habilidades?.resolucion}%</span>
+                </div>
+                <div className="psi-mini-hab">
+                  <span>Trabajo en equipo</span>
+                  <span className="psi-mini-hab-v">{psicoLocal.habilidades?.trabajoEquipo}%</span>
+                </div>
+                <div className="psi-mini-hab">
+                  <span>Analítico</span>
+                  <span className="psi-mini-hab-v">{psicoLocal.habilidades?.analitico}%</span>
+                </div>
+              </div>
+              <button className="psi-mini-reabrir" onClick={() => setMPsico(true)}>
+                Ver resultados completos
+              </button>
+              <button
+                className="psi-mini-reabrir"
+                style={{ marginTop: 6, color: "#dc2626" }}
+                onClick={async () => {
+                  const r = await Swal.fire({
+                    title: "¿Borrar resultados?",
+                    text: "Se eliminarán solo de este dispositivo.",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#dc2626",
+                    confirmButtonText: "Borrar",
+                    cancelButtonText: "Cancelar",
+                  });
+                  if (!r.isConfirmed) return;
+                  localStorage.removeItem(`estiloTrabajo_${auth.currentUser?.uid}`);
+                  setPsicoLocal(null);
+                }}
+              >
+                Borrar mis resultados
+              </button>
+            </div>
+          )}
 
           <div className="sidebar-card tips-card">
             <h6 className="sidebar-titulo">🔥 TIPS BCP</h6>
@@ -457,6 +537,28 @@ function Perfil() {
         onGuardarEdicion={async (it) => { await editarEnArray("cursos", editCurso.idx, it); setEditCurso(null); }} />}
       {editRotacion && <ModalRotacion abierto modoEdicion itemEdicion={editRotacion.item} onCerrar={() => setEditRotacion(null)} perfil={perfil}
         onGuardarEdicion={async (it) => { await editarEnArray("rotaciones", editRotacion.idx, it); setEditRotacion(null); }} />}
+
+      {/* ══ TEST: ESTILO DE TRABAJO (privado, solo localStorage) ══ */}
+      <TestPsicometrico
+        abierto={mPsico}
+        onCerrar={() => setMPsico(false)}
+        resultadoPrevio={psicoLocal}
+        onGuardar={async (resultado) => {
+          const uid = auth.currentUser?.uid;
+          if (uid) {
+            localStorage.setItem(`estiloTrabajo_${uid}`, JSON.stringify(resultado));
+          }
+          setPsicoLocal(resultado);
+          Swal.fire({
+            icon: "success",
+            title: "¡Resultados guardados!",
+            text: "Solo tú puedes verlos. Se guardaron en este dispositivo.",
+            confirmButtonColor: "#003DA5",
+            timer: 2500,
+            showConfirmButton: false,
+          });
+        }}
+      />
     </div>
   );
 }
@@ -1309,3 +1411,5 @@ function ModalHab({ abierto, onCerrar, perfil, onGuardar }) {
 
 
 export default Perfil;
+
+
